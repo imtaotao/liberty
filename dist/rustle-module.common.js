@@ -136,7 +136,6 @@ function importModule (url, async) {
 
 const rustleModule = {
   init,
-  import: importModule,
   config: convertToReadOnly(config),
 };
 

@@ -9,26 +9,26 @@ function check (filepath, url) {
   return true
 }
 
-function getRegisterParams (filepath) {
+function getRegisterParams (filepath, config) {
   const Module = { exports: {} }
   const require = url => {
     if (check(filepath, url)) {
-      return importModule(url, false)
+      return importModule(url, config, false)
     }
   }
   const requireAsync = url => {
     if (check(filepath, url)) {
-      return importModule(url, true)
+      return importModule(url, config, true)
     }
   }
 
   return { Module, require, requireAsync }
 }
 
-export default function (code, url) {
+export default function (code, url, config) {
   code = "'use strict';\n" + code
 
-  const { Module, require, requireAsync } = getRegisterParams(url)
+  const { Module, require, requireAsync } = getRegisterParams(url, config)
   const fn = new Function('require', 'requireAsync', 'module', 'exports', '__filename', code)
 
   fn(require, requireAsync, Module, Module.exports, url)

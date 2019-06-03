@@ -14,11 +14,11 @@ function request (url, async) {
   return xhr
 }
 
-function dealWithResponse (url, xhr) {
+function dealWithResponse (url, xhr, config) {
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       if (typeof xhr.response === 'string') {
-        return run(xhr.response, url)
+        return run(xhr.response, url, config)
       }
     } else if (xhr.status === 404) {
       throw Error(`${url} is not found.`)
@@ -26,12 +26,12 @@ function dealWithResponse (url, xhr) {
   }
 }
 
-export async function asyncRequest (url) {
+export async function asyncRequest (url, config) {
   const { target: xhr } = await request(url, true)
-  return dealWithResponse(url, xhr)
+  return dealWithResponse(url, xhr, config)
 }
 
-export function syncRequest (url) {
+export function syncRequest (url, config) {
   const xhr = request(url, false)
-  return dealWithResponse(url, xhr)
+  return dealWithResponse(url, xhr, config)
 }

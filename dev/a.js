@@ -1,8 +1,8 @@
-console.log(__filename)
-console.log(this)
-// const c = RM.import('dev/a.js')
-exports.dd = function (a) {
-  console.log(a);
-}
+// console.time('vue')
+// var vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js')
+// console.dir(vue);
+// console.timeEnd('vue')
 
-// module.exports = 1212
+for(let i = 0; i < 5; i++) {
+  console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'));
+}
