@@ -1,4 +1,4 @@
-import run from './run'
+import Plugins from './plugin'
 
 function request (url, async) {
   const xhr = new XMLHttpRequest()

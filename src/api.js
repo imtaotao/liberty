@@ -15,18 +15,18 @@ export function init (url, otps = {}) {
   otps.baseURL = url
   this.config = convertToReadOnly({...config, ...otps})
   
-  importModule(url, this.config, true)
+  importModule(url, this, true)
 }
 
-export function importModule (url, config, isAsync) {
+export function importModule (url, Instance, isAsync) {
   if (typeof url !== 'string') {
     warn('url must be a string')
   }
 
   let exname = getExname(url)
   if (!exname) {
-    exname = config.defaultType
-    url += ('.' + config.defaultType)
+    exname = Instanceconfig.defaultType
+    url += ('.' + Instance.config.defaultType)
   }
 
   const Module = getModule(url)
