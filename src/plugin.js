@@ -4,6 +4,10 @@ class Plugins {
     this.plugins = new Set()
   }
 
+  add (fn) {
+    this.plugins.add(fn)
+  }
+
   forEach (params) {
     let res = null
     for (const plugin of this.plugins.values()) {
@@ -21,7 +25,7 @@ const map = {
       if (!this.allPlugins.has(type)) {
         const pluginClass = new Plugins(type)
         pluginClass.add(fn)
-        this.allPlugins.set(pluginClass)
+        this.allPlugins.set(type, pluginClass)
       } else {
         this.allPlugins.get(type).add(fn)
       }
@@ -33,14 +37,15 @@ const map = {
   },
 
   run (type, params) {
-    const plugins = this.get(type)
+    const plugins = this.allPlugins.get(type)
     if (plugins) {
-      plugins.forEach(params)
+      return plugins.forEach(params)
     }
+    return null
   }
 }
 
 // default global pluging
-map.add('*', code => code)
+map.add('*', resource => resource)
 
 export default map
