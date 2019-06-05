@@ -32,7 +32,7 @@ const map = {
         this.allPlugins.get(type).add(fn)
       }
     } else {
-      throw TypeError('The parameter does not meet the requirements')
+      throw TypeError('The "parameter" does not meet the requirements')
     }
   },
 
@@ -54,5 +54,7 @@ export function addDefaultPlugins () {
   map.add('*', opts => opts.resource)
   map.add('js', jsPlugin)
 }
+
+window.a = map
 
 export default map

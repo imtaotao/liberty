@@ -1,21 +1,22 @@
 import config from './config'
-import { getModule, cacheModule } from './cache'
+import cacheModule from './cache'
+import jsPlugin from './js-plugin'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
-import { warn, realpath, getExname, convertToReadOnly } from './utils'
+import { realpath, getExname, readOnly, readOnlyMap } from './utils'
 
 export function init (url, opts = {}) {
   if (this.config && this.config.init) {
-    warn('can\'t repeat init')
-  }
-  if (typeof url !== 'string') {
-    warn('error')
+    throw new Error('can\'t repeat init')
   }
 
   opts.init = true
   opts.baseURL = url
-  this.config = convertToReadOnly(Object.assign(config, opts))
-  
+
+  // set config attribute
+  readOnly(this, 'config',
+    readOnlyMap(Object.assign(config, opts))
+  )
   addDefaultPlugins()
   importModule(url, this.config, true)
 }
@@ -39,16 +40,31 @@ export function addPlugin (exname, fn) {
   }
 }
 
+// waiting for the modules to be loaded, and then continue to work
+export function ready (paths) {
+  if (!Array.isArray(paths)) {
+    throw TypeError('"paths" must be an array')
+  }
+
+  // need add js plugins, because the default pluging added in init method
+  // but the plugins is set collection, so it will not be added repeatedly
+  addPlugin.call(this, 'js', jsPlugin)
+
+  return Promise.all(
+    paths.map(path => importModule(path, this.config, true))
+  )
+}
+
 export function importModule (path, config, isAsync) {
   if (typeof path !== 'string') {
-    warn('path must be a string')
+    throw TypeError('"path" must be a string')
   }
 
   const pathOpts = getRealPath(path, config)
-  const Module = getModule(pathOpts.path)
 
   // if aleady cache, return cache result
-  if (Module) {
+  if (cacheModule.has(pathOpts.path)) {
+    const Module = cacheModule.get(pathOpts.path)
     const result = getModuleResult(Module)
     return !isAsync
       ? result
@@ -93,7 +109,7 @@ function getModuleForSync ({path, exname}, config) {
 // process resource
 function processResource (path, exname, config, resource) {
   const Module = runPlugins(exname, { path, exname, config, resource })
-  cacheModule(path, Module)
+  cacheModule.cache(path, Module)
   return getModuleResult(Module)
 }
 

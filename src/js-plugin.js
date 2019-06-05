@@ -1,19 +1,17 @@
-import { warn } from './utils'
 import { importModule } from './api'
+import { warn, readOnly } from './utils'
 
 function check (filepath, path) {
   if (filepath === path) {
-    warn('can\'t import self.')
+    warn('can\'t import self')
     return false
   }
   return true
 }
 
 function getRegisterParams (filepath, config) {
-  const Module = {
-    exports: {},
-    __rustleModule: true,
-  }
+  const Module = { exports: {} }
+  readOnly(Module, '__rustleModule', true)
 
   const require = path => {
     if (check(filepath, path)) {

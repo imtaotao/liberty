@@ -12,9 +12,16 @@
     RM.addPlugin('json', opts => {
       return JSON.parse(opts.resource)
     })
-    RM.addPlugin('grs', RM.jsPlugin)
+    RM.addPlugin('grs', RM.plugins.jsPlugin)
 
-    RM.init('dev/index.js')
+    RM.ready([
+      'dev/a.grs',
+      'dev/b.js',
+      'dev/c.json',
+    ]).then(res => {
+      console.log(res);
+      RM.init('dev/index.js')
+    })
   </script>
 </body>
 </html>

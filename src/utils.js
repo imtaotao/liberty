@@ -6,13 +6,18 @@ export const warn = (msg, isWarn) => {
   throw Error(msg)
 }
 
-export const convertToReadOnly = obj => {
+export const readOnly = (obj, key, value) => {
+  Object.defineProperty(obj, key, {
+    value: value,
+    writable: false,
+  })
+}
+
+export const readOnlyMap = obj => {
   const newObj = {}
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
-      Object.defineProperty(newObj, key, {
-        get () { return obj[key] }
-      })
+      readOnly(newObj, key, obj[key])
     }
   }
   return newObj

@@ -1,8 +1,13 @@
+import cacheModule from './cache'
 import jsPlugin from './js-plugin'
-import { init, addPlugin } from './api'
+import { init, ready, addPlugin } from './api'
 
 export default {
   init,
-  jsPlugin,
+  ready,
   addPlugin,
+  cache: cacheModule,
+  plugins: {
+    jsPlugin,
+  }
 }

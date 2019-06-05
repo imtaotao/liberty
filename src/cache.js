@@ -1,21 +1,25 @@
-const cacheModules = Object.create(null)
+const Modules = new Map()
 
-export function cacheModule (path, Module) {
-  Object.defineProperty(cacheModules, path, {
-    get () { return Module }
-  })
-}
+export default {
+  cache (path, Module) {
+    if (!this.has(path)) {
+      Modules.set(path, Module)
+    }
+  },
 
-export function getModule (path) {
-  return cacheModules[path]
-}
+  has (path) {
+    return Modules.has(path)
+  },
 
-export function clearMoudle (path) {
-  if (cacheModules[path]) {
-    cacheModules[path] = null
-  }
-}
+  get (path) {
+    return Modules.get(path) || null
+  },
 
-export function clearAllMoudle () {
-  cacheModules = Object.create(null)
+  clear (path) {
+    return Modules.delete(path)
+  },
+
+  clearAll () {
+    return Modules.clear()
+  },
 }

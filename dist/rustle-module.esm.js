@@ -1,53 +1,28 @@
+const Modules = new Map();
+var cacheModule = {
+  cache (path, Module) {
+    if (!this.has(path)) {
+      Modules.set(path, Module);
+    }
+  },
+  has (path) {
+    return Modules.has(path)
+  },
+  get (path) {
+    return Modules.get(path) || null
+  },
+  clear (path) {
+    return Modules.delete(path)
+  },
+  clearAll () {
+    return Modules.clear()
+  },
+};
+
 var config = {
   init: false,
   defaultExname: 'js',
 };
-
-const cacheModules = Object.create(null);
-function cacheModule (path, Module) {
-  Object.defineProperty(cacheModules, path, {
-    get () { return Module }
-  });
-}
-function getModule (path) {
-  return cacheModules[path]
-}
-
-const DOT_RE = /\/\.\//g;
-const DOUBLE_DOT_RE = /\/[^/]+\/\.\.\//;
-const MULTI_SLASH_RE = /([^:/])\/+\//g;
-const warn = (msg, isWarn) => {
-  throw Error(msg)
-};
-const convertToReadOnly = obj => {
-  const newObj = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      Object.defineProperty(newObj, key, {
-        get () { return obj[key] }
-      });
-    }
-  }
-  return newObj
-};
-const getExname = path => {
-  const index = path.lastIndexOf('.');
-  return index > -1
-    ? path.substr(index + 1)
-    : null
-};
-const realpath = path => {
-  path = path.replace(DOT_RE, "/");
-  path = path.replace(MULTI_SLASH_RE, "$1/");
-  while (path.match(DOUBLE_DOT_RE)) {
-    path = path.replace(DOUBLE_DOT_RE, "/");
-  }
-  return path
-};
-
-function jsPlugin (opts) {
-  console.log(opts);
-}
 
 class Plugins {
   constructor (type) {
@@ -77,7 +52,7 @@ const map = {
         this.allPlugins.get(type).add(fn);
       }
     } else {
-      throw TypeError('The parameter does not meet the requirements')
+      throw TypeError('The "parameter" does not meet the requirements')
     }
   },
   get (type = '*') {
@@ -88,19 +63,20 @@ const map = {
     if (plugins) {
       return plugins.forEach(params)
     }
-    return null
+    return params
   }
 };
 function addDefaultPlugins () {
   map.add('*', opts => opts.resource);
   map.add('js', jsPlugin);
 }
+window.a = map;
 
-function request (url, async) {
+function request (url, isAsync) {
   const xhr = new XMLHttpRequest();
-  xhr.open('GET', url, async);
+  xhr.open('GET', url, isAsync);
   xhr.send();
-  if (async) {
+  if (isAsync) {
     return new Promise((resolve, reject) => {
       xhr.onload = resolve;
       xhr.onerror = reject;
@@ -115,7 +91,7 @@ function dealWithResponse (url, xhr) {
         return xhr.response
       }
     } else if (xhr.status === 404) {
-      throw Error(`${url} is not found.`)
+      throw Error(`Module "${url}" is not found`)
     }
   }
 }
@@ -128,40 +104,101 @@ function syncRequest (url) {
   return dealWithResponse(url, xhr)
 }
 
-function init (url, otps = {}) {
+const DOT_RE = /\/\.\//g;
+const DOUBLE_DOT_RE = /\/[^/]+\/\.\.\//;
+const MULTI_SLASH_RE = /([^:/])\/+\//g;
+const warn = (msg, isWarn) => {
+  throw Error(msg)
+};
+const readOnly = (obj, key, value) => {
+  Object.defineProperty(obj, key, {
+    value: value,
+    writable: false,
+  });
+};
+const readOnlyMap = obj => {
+  const newObj = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      readOnly(newObj, key, obj[key]);
+    }
+  }
+  return newObj
+};
+const getExname = path => {
+  const index = path.lastIndexOf('.');
+  return index > -1
+    ? path.substr(index + 1)
+    : null
+};
+const realpath = path => {
+  path = path.replace(DOT_RE, "/");
+  path = path.replace(MULTI_SLASH_RE, "$1/");
+  while (path.match(DOUBLE_DOT_RE)) {
+    path = path.replace(DOUBLE_DOT_RE, "/");
+  }
+  return path
+};
+
+function init (url, opts = {}) {
   if (this.config && this.config.init) {
-    warn('can\'t repeat init');
+    throw new Error('can\'t repeat init')
   }
-  if (typeof url !== 'string') {
-    warn('error');
-  }
-  otps.init = true;
-  otps.baseURL = url;
-  this.config = convertToReadOnly({...config, ...otps});
+  opts.init = true;
+  opts.baseURL = url;
+  readOnly(this, 'config',
+    readOnlyMap(Object.assign(config, opts))
+  );
   addDefaultPlugins();
-  importModule(url, this, true);
+  importModule(url, this.config, true);
 }
-function addPlugin (type, fn) {
-  if (!this.config.init) {
-    map.add(type, fn);
-  } else {
+function addPlugin (exname, fn) {
+  if (this.config && this.config.init) {
     throw Error('Unable to add plugin after initialization')
+  } else {
+    if (typeof exname === 'string') {
+      const types = exname.split(' ');
+      if (types.length) {
+        if (types.length === 1) {
+          map.add(types[0], fn);
+        } else {
+          for (const type of types) {
+            map.add(type, fn);
+          }
+        }
+      }
+    }
   }
 }
-function importModule (path, Instance, isAsync) {
-  if (typeof path !== 'string') {
-    warn('path must be a string');
+function ready (paths) {
+  if (!Array.isArray(paths)) {
+    throw TypeError('"paths" must be an array')
   }
-  const pathOpts = getRealPath(path, Instance.config);
-  const Module = getModule(pathOpts.path);
-  if (Module) {
-    return isAsync
-      ? Promise.resolve(Module.exports)
-      : Module.exports
+  addPlugin.call(this, 'js', jsPlugin);
+  return Promise.all(
+    paths.map(path => importModule(path, this.config, true))
+  )
+}
+function importModule (path, config, isAsync) {
+  if (typeof path !== 'string') {
+    throw TypeError('"path" must be a string')
+  }
+  const pathOpts = getRealPath(path, config);
+  if (cacheModule.has(pathOpts.path)) {
+    const Module = cacheModule.get(pathOpts.path);
+    const result = getModuleResult(Module);
+    return !isAsync
+      ? result
+      : Promise.resolve(result)
   }
   return isAsync
     ? getModuleForAsync(pathOpts, config)
     : getModuleForSync(pathOpts, config)
+}
+function getModuleResult (Module) {
+  return typeof Module === 'object' && Module.__rustleModule
+    ? Module.exports
+    : Module
 }
 function getRealPath (path, config) {
   let exname = getExname(path);
@@ -176,23 +213,64 @@ function getRealPath (path, config) {
 }
 function getModuleForAsync ({path, exname}, config) {
   return asyncRequest(path, config).then(resource => {
-    const Module = runPlugins(exname, { path, config, resource });
-    console.log(Module);
+    return processResource(path, exname, config, resource)
   })
 }
 function getModuleForSync ({path, exname}, config) {
-  const Module = syncRequest(path, resource);
-  cacheModule(path, Module);
-  return Module.exports
+  const resource = syncRequest(path, config);
+  return processResource(path, exname, config, resource)
+}
+function processResource (path, exname, config, resource) {
+  const Module = runPlugins(exname, { path, exname, config, resource });
+  cacheModule.cache(path, Module);
+  return getModuleResult(Module)
 }
 function runPlugins (type, opts) {
-  opts.resource = map.run('*', opts);
-  return map.run(type, opts)
+  opts = map.run('*', opts);
+  return map.run(type, opts).resource
 }
 
-const rustleModule = {
+function check (filepath, path) {
+  if (filepath === path) {
+    warn('can\'t import self');
+    return false
+  }
+  return true
+}
+function getRegisterParams (filepath, config) {
+  const Module = { exports: {} };
+  readOnly(Module, '__rustleModule', true);
+  const require = path => {
+    if (check(filepath, path)) {
+      return importModule(path, config, false)
+    }
+  };
+  const requireAsync = path => {
+    if (check(filepath, path)) {
+      return importModule(path, config, true)
+    }
+  };
+  return { Module, require, requireAsync }
+}
+function runCode (code, path, config) {
+  code = "'use strict';\n" + code;
+  const { Module, require, requireAsync } = getRegisterParams(path, config);
+  const fn = new Function('require', 'requireAsync', 'module', 'exports', '__filename', code);
+  fn(require, requireAsync, Module, Module.exports, path);
+  return Module
+}
+function jsPlugin ({resource, path, config}) {
+  return runCode(resource, path, config)
+}
+
+var index = {
   init,
+  ready,
   addPlugin,
+  cache: cacheModule,
+  plugins: {
+    jsPlugin,
+  }
 };
 
-export default rustleModule;
+export default index;

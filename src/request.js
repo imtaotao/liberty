@@ -19,7 +19,7 @@ function dealWithResponse (url, xhr) {
         return xhr.response
       }
     } else if (xhr.status === 404) {
-      throw Error(`${url} is not found.`)
+      throw Error(`Module "${url}" is not found`)
     }
   }
 }
