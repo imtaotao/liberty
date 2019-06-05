@@ -2,93 +2,22 @@
 
 var config = {
   init: false,
-  defaultType: 'js',
+  defaultExname: 'js',
 };
 
 const cacheModules = Object.create(null);
-function cacheModule (url, Module) {
-  Object.defineProperty(cacheModules, url, {
+function cacheModule (path, Module) {
+  Object.defineProperty(cacheModules, path, {
     get () { return Module }
   });
 }
-function getModule (url) {
-  return cacheModules[url]
+function getModule (path) {
+  return cacheModules[path]
 }
 
-class Plugins {
-  constructor (type) {
-    this.type = type;
-    this.plugins = new Set();
-  }
-  add (fn) {
-    this.plugins.add(fn);
-  }
-  forEach (params) {
-    let res = null;
-    for (const plugin of this.plugins.values()) {
-      res = plugin(params);
-    }
-    return res
-  }
-}
-const map = {
-  allPlugins: new Map(),
-  add (type, fn) {
-    if (typeof type === 'string' && typeof fn === 'function') {
-      if (!this.allPlugins.has(type)) {
-        const pluginClass = new Plugins(type);
-        pluginClass.add(fn);
-        this.allPlugins.set(pluginClass);
-      } else {
-        this.allPlugins.get(type).add(fn);
-      }
-    }
-  },
-  get (type = '*') {
-    return this.allPlugins.get(type)
-  },
-  run (type, params) {
-    const plugins = this.get(type);
-    if (plugins) {
-      return plugins.forEach(params)
-    }
-    return null
-  }
-};
-map.add('*', code => code);
-
-function request (url, async) {
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', url, async);
-  xhr.send();
-  if (async) {
-    return new Promise((resolve, reject) => {
-      xhr.onload = resolve;
-      xhr.onerror = reject;
-    })
-  }
-  return xhr
-}
-function dealWithResponse (url, xhr, config) {
-  if (xhr.readyState === 4) {
-    if (xhr.status === 200) {
-      if (typeof xhr.response === 'string') {
-        return run(xhr.response, url, config)
-      }
-    } else if (xhr.status === 404) {
-      throw Error(`${url} is not found.`)
-    }
-  }
-}
-async function asyncRequest (url, config) {
-  const { target: xhr } = await request(url, true);
-  return dealWithResponse(url, xhr, config)
-}
-function syncRequest (url, config) {
-  const xhr = request(url, false);
-  return dealWithResponse(url, xhr, config)
-}
-
+const DOT_RE = /\/\.\//g;
+const DOUBLE_DOT_RE = /\/[^/]+\/\.\.\//;
+const MULTI_SLASH_RE = /([^:/])\/+\//g;
 const warn = (msg, isWarn) => {
   throw Error(msg)
 };
@@ -109,6 +38,97 @@ const getExname = path => {
     ? path.substr(index + 1)
     : null
 };
+const realpath = path => {
+  path = path.replace(DOT_RE, "/");
+  path = path.replace(MULTI_SLASH_RE, "$1/");
+  while (path.match(DOUBLE_DOT_RE)) {
+    path = path.replace(DOUBLE_DOT_RE, "/");
+  }
+  return path
+};
+
+function jsPlugin (opts) {
+  console.log(opts);
+}
+
+class Plugins {
+  constructor (type) {
+    this.type = type;
+    this.plugins = new Set();
+  }
+  add (fn) {
+    this.plugins.add(fn);
+  }
+  forEach (params) {
+    let res = params;
+    for (const plugin of this.plugins.values()) {
+      res.resource = plugin(res);
+    }
+    return res
+  }
+}
+const map = {
+  allPlugins: new Map(),
+  add (type, fn) {
+    if (typeof type === 'string' && typeof fn === 'function') {
+      if (!this.allPlugins.has(type)) {
+        const pluginClass = new Plugins(type);
+        pluginClass.add(fn);
+        this.allPlugins.set(type, pluginClass);
+      } else {
+        this.allPlugins.get(type).add(fn);
+      }
+    } else {
+      throw TypeError('The parameter does not meet the requirements')
+    }
+  },
+  get (type = '*') {
+    return this.allPlugins.get(type)
+  },
+  run (type, params) {
+    const plugins = this.allPlugins.get(type);
+    if (plugins) {
+      return plugins.forEach(params)
+    }
+    return null
+  }
+};
+function addDefaultPlugins () {
+  map.add('*', opts => opts.resource);
+  map.add('js', jsPlugin);
+}
+
+function request (url, async) {
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', url, async);
+  xhr.send();
+  if (async) {
+    return new Promise((resolve, reject) => {
+      xhr.onload = resolve;
+      xhr.onerror = reject;
+    })
+  }
+  return xhr
+}
+function dealWithResponse (url, xhr) {
+  if (xhr.readyState === 4) {
+    if (xhr.status === 200) {
+      if (typeof xhr.response === 'string') {
+        return xhr.response
+      }
+    } else if (xhr.status === 404) {
+      throw Error(`${url} is not found.`)
+    }
+  }
+}
+async function asyncRequest (url) {
+  const { target: xhr } = await request(url, true);
+  return dealWithResponse(url, xhr)
+}
+function syncRequest (url) {
+  const xhr = request(url, false);
+  return dealWithResponse(url, xhr)
+}
 
 function init (url, otps = {}) {
   if (this.config && this.config.init) {
@@ -120,39 +140,61 @@ function init (url, otps = {}) {
   otps.init = true;
   otps.baseURL = url;
   this.config = convertToReadOnly({...config, ...otps});
+  addDefaultPlugins();
   importModule(url, this, true);
 }
-function importModule (url, Instance, isAsync) {
-  if (typeof url !== 'string') {
-    warn('url must be a string');
+function addPlugin (type, fn) {
+  if (!this.config.init) {
+    map.add(type, fn);
+  } else {
+    throw Error('Unable to add plugin after initialization')
   }
-  let exname = getExname(url);
-  if (!exname) {
-    exname = Instanceconfig.defaultType;
-    url += ('.' + Instance.config.defaultType);
+}
+function importModule (path, Instance, isAsync) {
+  if (typeof path !== 'string') {
+    warn('path must be a string');
   }
-  const Module = getModule(url);
+  const pathOpts = getRealPath(path, Instance.config);
+  const Module = getModule(pathOpts.path);
   if (Module) {
     return isAsync
       ? Promise.resolve(Module.exports)
       : Module.exports
   }
-  if (isAsync) {
-    return asyncRequest(url, config).then(Module => {
-      cacheModule(url, Module);
-      return Module.exports
-    })
-  } else {
-    const Module = syncRequest(url, config);
-    cacheModule(url, Module);
-    return Module.exports
+  return isAsync
+    ? getModuleForAsync(pathOpts, config)
+    : getModuleForSync(pathOpts, config)
+}
+function getRealPath (path, config) {
+  let exname = getExname(path);
+  if (!exname) {
+    exname = config.defaultExname;
+    path += ('.' + config.defaultExname);
   }
+  return {
+    exname,
+    path: realpath(path),
+  }
+}
+function getModuleForAsync ({path, exname}, config) {
+  return asyncRequest(path, config).then(resource => {
+    const Module = runPlugins(exname, { path, config, resource });
+    console.log(Module);
+  })
+}
+function getModuleForSync ({path, exname}, config) {
+  const Module = syncRequest(path, resource);
+  cacheModule(path, Module);
+  return Module.exports
+}
+function runPlugins (type, opts) {
+  opts.resource = map.run('*', opts);
+  return map.run(type, opts)
 }
 
 const rustleModule = {
   init,
+  addPlugin,
 };
-var a = map.run('*', 'fdsf');
-console.log(a);
 
 module.exports = rustleModule;

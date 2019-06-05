@@ -1,4 +1,4 @@
 export default {
   init: false,
-  defaultType: 'js',
+  defaultExname: 'js',
 }

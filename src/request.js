@@ -1,5 +1,3 @@
-import Plugins from './plugin'
-
 function request (url, async) {
   const xhr = new XMLHttpRequest()
   xhr.open('GET', url, async)
@@ -14,11 +12,11 @@ function request (url, async) {
   return xhr
 }
 
-function dealWithResponse (url, xhr, config) {
+function dealWithResponse (url, xhr) {
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       if (typeof xhr.response === 'string') {
-        return run(xhr.response, url, config)
+        return xhr.response
       }
     } else if (xhr.status === 404) {
       throw Error(`${url} is not found.`)
@@ -26,12 +24,12 @@ function dealWithResponse (url, xhr, config) {
   }
 }
 
-export async function asyncRequest (url, config) {
+export async function asyncRequest (url) {
   const { target: xhr } = await request(url, true)
-  return dealWithResponse(url, xhr, config)
+  return dealWithResponse(url, xhr)
 }
 
-export function syncRequest (url, config) {
+export function syncRequest (url) {
   const xhr = request(url, false)
-  return dealWithResponse(url, xhr, config)
+  return dealWithResponse(url, xhr)
 }

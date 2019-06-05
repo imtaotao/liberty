@@ -9,6 +9,9 @@
 <body>
   <script src='./dist/rustle-module.min.js'></script>
   <script>
+    RM.addPlugin('json', opts => {
+      return JSON.parse(opts.resource)
+    })
     RM.init('dev/index.js')
   </script>
 </body>

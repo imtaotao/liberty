@@ -1,18 +1,18 @@
 const cacheModules = Object.create(null)
 
-export function cacheModule (url, Module) {
-  Object.defineProperty(cacheModules, url, {
+export function cacheModule (path, Module) {
+  Object.defineProperty(cacheModules, path, {
     get () { return Module }
   })
 }
 
-export function getModule (url) {
-  return cacheModules[url]
+export function getModule (path) {
+  return cacheModules[path]
 }
 
-export function clearMoudle (url) {
-  if (cacheModules[url]) {
-    cacheModules[url] = null
+export function clearMoudle (path) {
+  if (cacheModules[path]) {
+    cacheModules[path] = null
   }
 }
 

@@ -1,7 +1,8 @@
 import config from './config'
 import { getModule, cacheModule } from './cache'
+import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
-import { warn, getExname, convertToReadOnly } from './utils'
+import { warn, realpath, getExname, convertToReadOnly } from './utils'
 
 export function init (url, otps = {}) {
   if (this.config && this.config.init) {
@@ -15,36 +16,67 @@ export function init (url, otps = {}) {
   otps.baseURL = url
   this.config = convertToReadOnly({...config, ...otps})
   
-  importModule(url, this, true)
+  addDefaultPlugins()
+  importModule(url, this.config, true)
 }
 
-export function importModule (url, Instance, isAsync) {
-  if (typeof url !== 'string') {
-    warn('url must be a string')
-  }
-
-  let exname = getExname(url)
-  if (!exname) {
-    exname = Instanceconfig.defaultType
-    url += ('.' + Instance.config.defaultType)
-  }
-
-  const Module = getModule(url)
-  if (Module) {
-    return isAsync
-      ? Promise.resolve(Module.exports)
-      : Module.exports
-  }
-
-  // 第一次获取走 xhr
-  if (isAsync) {
-    return asyncRequest(url, config).then(Module => {
-      cacheModule(url, Module)
-      return Module.exports
-    })
+export function addPlugin (type, fn) {
+  if (this.config && this.config.init) {
+    throw Error('Unable to add plugin after initialization')
   } else {
-    const Module = syncRequest(url, config)
-    cacheModule(url, Module)
-    return Module.exports
+    Plugins.add(type, fn)
   }
+}
+
+export function importModule (path, config, isAsync) {
+  if (typeof path !== 'string') {
+    warn('path must be a string')
+  }
+
+  const pathOpts = getRealPath(path, config)
+  const Module = getModule(pathOpts.path)
+
+  // if aleady cache, return cache result
+  if (Module) {
+    return !isAsync
+      ? Module
+      : Promise.resolve(Module)
+  }
+
+  return isAsync
+    ? getModuleForAsync(pathOpts, config)
+    : getModuleForSync(pathOpts, config)
+}
+
+function getRealPath (path, config) {
+  let exname = getExname(path)
+  if (!exname) {
+    exname = config.defaultExname
+    path += ('.' + config.defaultExname)
+  }
+
+  return {
+    exname,
+    path: realpath(path),
+  }
+}
+
+function getModuleForAsync ({path, exname}, config) {
+  return asyncRequest(path, config).then(resource => {
+    const Module = runPlugins(exname, { path, config, resource })
+    cacheModule(path, Module)
+    return Module
+  })
+}
+
+function getModuleForSync ({path, exname}, config) {
+  const resource = syncRequest(path, config)
+  const Module = runPlugins(exname, { path, config, resource })
+  cacheModule(path, Module)
+  return Module
+}
+
+function runPlugins (type, opts) {
+  opts = Plugins.run('*', opts)
+  return Plugins.run(type, opts).resource
 }

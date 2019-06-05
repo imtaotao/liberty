@@ -1,3 +1,5 @@
+import jsPlugin from './js-plugin'
+
 class Plugins {
   constructor (type) {
     this.type = type
@@ -9,9 +11,9 @@ class Plugins {
   }
 
   forEach (params) {
-    let res = null
+    let res = params
     for (const plugin of this.plugins.values()) {
-      res = plugin(params)
+      res.resource = plugin(res)
     }
     return res
   }
@@ -29,6 +31,8 @@ const map = {
       } else {
         this.allPlugins.get(type).add(fn)
       }
+    } else {
+      throw TypeError('The parameter does not meet the requirements')
     }
   },
 
@@ -41,11 +45,14 @@ const map = {
     if (plugins) {
       return plugins.forEach(params)
     }
-    return null
+    return params
   }
 }
 
-// default global pluging
-map.add('*', resource => resource)
+// add default plugings
+export function addDefaultPlugins () {
+  map.add('*', opts => opts.resource)
+  map.add('js', jsPlugin)
+}
 
 export default map

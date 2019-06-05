@@ -1,12 +1,8 @@
-import { init } from './api'
-import plugins from './plugin'
+import { init, addPlugin } from './api'
 
 const rustleModule = {
   init,
+  addPlugin,
 }
-
-plugins.add('*', c => c + 2)
-var a = plugins.run('*', '1')
-console.log(a);
 
 export default rustleModule
