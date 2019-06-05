@@ -1,5 +1,3 @@
-console.log(121);
-
-exports.warn = function (a) {
-  console.log(a);
-}
+exports.one = 1
+exports.fn = () => {}
+exports.word = v => v += '11'

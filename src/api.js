@@ -1,6 +1,5 @@
 import config from './config'
 import cacheModule from './cache'
-import jsPlugin from './js-plugin'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
 import { realpath, getExname, readOnly, readOnlyMap } from './utils'
@@ -42,13 +41,12 @@ export function addPlugin (exname, fn) {
 
 // waiting for the modules to be loaded, and then continue to work
 export function ready (paths) {
+  if (!this.config || !this.config.init) {
+    throw new Error('must be initialized before use')
+  }
   if (!Array.isArray(paths)) {
     throw TypeError('"paths" must be an array')
   }
-
-  // need add js plugins, because the default pluging added in init method
-  // but the plugins is set collection, so it will not be added repeatedly
-  addPlugin.call(this, 'js', jsPlugin)
 
   return Promise.all(
     paths.map(path => importModule(path, this.config, true))
@@ -96,19 +94,27 @@ function getRealPath (path, config) {
 }
 
 function getModuleForAsync ({path, exname}, config) {
-  return asyncRequest(path, config).then(resource => {
-    return processResource(path, exname, config, resource)
+  return asyncRequest(path, config).then(res => {
+    return processResource(path, exname, config, res)
   })
 }
 
 function getModuleForSync ({path, exname}, config) {
-  const resource = syncRequest(path, config)
-  return processResource(path, exname, config, resource)
+  const res = syncRequest(path, config)
+  return processResource(path, exname, config, res)
 }
 
 // process resource
-function processResource (path, exname, config, resource) {
-  const Module = runPlugins(exname, { path, exname, config, resource })
+function processResource (path, exname, config, res) {
+  const Module = runPlugins(exname, {
+    path,
+    exname,
+    config,
+    resource: res.resource,
+    responseURL: res.responseURL || null,
+  })
+
+  // we need other Module
   cacheModule.cache(path, Module)
   return getModuleResult(Module)
 }

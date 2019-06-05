@@ -1,9 +1,13 @@
-const m = require('dev/a.grs')
-const c = require('dev/a.grs')
+module.exports = 'indexFile'
 
-console.log(m, c, __filename);
+const AM = require('dev/a.grs')
+const BM = require('dev/b.js')
 
-// require('dev/b').warn('fsadf')
-// console.log(require('dev/c.json'));
+requireAsync('dev/b.js').then(bm => {
+  console.assert(bm === BM, 'bm 不等')
+  console.assert(BM.fn === bm.fn, 'bm fn 不等')
+})
 
-// console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'), 121)
+console.assert(BM.one === 1, 'bm one 的值不对')
+console.assert(BM.word('a') === 'a11', 'bm word 方法返回错误')
+console.assert(AM.vue.name === 'Vue', 'vue 函数的名字不对')

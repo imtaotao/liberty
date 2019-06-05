@@ -1,10 +1,10 @@
-// console.time('vue')
-// var vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js')
-// console.dir(vue);
-// console.timeEnd('vue')
+const AM = require('dev/index.js')
 
-for(let i = 0; i < 5; i++) {
-  // console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'));
-}
+requireAsync('dev/index').then(module => {
+  console.log(module);
+  console.assert(module === 'indexFile', 'index 文件返回的值不对')
+})
 
-console.log(__filename, 'fdsfsdfsf');
+// console.assert(AM.vue.name === 'Vue', 'vue 函数的名字不对')
+
+exports.vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js')

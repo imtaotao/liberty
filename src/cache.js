@@ -1,8 +1,8 @@
 const Modules = new Map()
 
 export default {
-  cache (path, Module) {
-    if (!this.has(path)) {
+  cache (path, Module, update) {
+    if (update || !this.has(path)) {
       Modules.set(path, Module)
     }
   },
@@ -23,3 +23,5 @@ export default {
     return Modules.clear()
   },
 }
+
+window.a = Modules

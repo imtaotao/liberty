@@ -16,7 +16,11 @@ function dealWithResponse (url, xhr) {
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       if (typeof xhr.response === 'string') {
-        return xhr.response
+        // return xhr infomation and resource
+        return {
+          resource: xhr.response,
+          responseURL: xhr.responseURL,
+        }
       }
     } else if (xhr.status === 404) {
       throw Error(`Module "${url}" is not found`)

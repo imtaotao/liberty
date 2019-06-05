@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "server": "http-server ./ -o",
-    "dev": "node build.js -w"
+    "dev": "node build.js -w",
+    "test": "node ./commonjs/a.js"
   },
   "author": "imtaotao",
   "license": "ISC",

@@ -9,19 +9,11 @@
 <body>
   <script src='./dist/rustle-module.min.js'></script>
   <script>
-    RM.addPlugin('json', opts => {
-      return JSON.parse(opts.resource)
-    })
     RM.addPlugin('grs', RM.plugins.jsPlugin)
+    RM.addPlugin('json', opts => JSON.parse(opts.resource))
 
-    RM.ready([
-      'dev/a.grs',
-      'dev/b.js',
-      'dev/c.json',
-    ]).then(res => {
-      console.log(res);
-      RM.init('dev/index.js')
-    })
+    RM.init('dev/index.js')
   </script>
+  <!-- <script src='./esm/a.js' type="module"></script> -->
 </body>
 </html>

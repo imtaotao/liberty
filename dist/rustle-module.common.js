@@ -2,8 +2,8 @@
 
 const Modules = new Map();
 var cacheModule = {
-  cache (path, Module) {
-    if (!this.has(path)) {
+  cache (path, Module, update) {
+    if (update || !this.has(path)) {
       Modules.set(path, Module);
     }
   },
@@ -20,6 +20,7 @@ var cacheModule = {
     return Modules.clear()
   },
 };
+window.a = Modules;
 
 var config = {
   init: false,
@@ -72,7 +73,6 @@ function addDefaultPlugins () {
   map.add('*', opts => opts.resource);
   map.add('js', jsPlugin);
 }
-window.a = map;
 
 function request (url, isAsync) {
   const xhr = new XMLHttpRequest();
@@ -173,10 +173,12 @@ function addPlugin (exname, fn) {
   }
 }
 function ready (paths) {
+  if (!this.config || !this.config.init) {
+    throw new Error('must be initialized before use')
+  }
   if (!Array.isArray(paths)) {
     throw TypeError('"paths" must be an array')
   }
-  addPlugin.call(this, 'js', jsPlugin);
   return Promise.all(
     paths.map(path => importModule(path, this.config, true))
   )
@@ -224,7 +226,6 @@ function getModuleForSync ({path, exname}, config) {
 }
 function processResource (path, exname, config, resource) {
   const Module = runPlugins(exname, { path, exname, config, resource });
-  cacheModule.cache(path, Module);
   return getModuleResult(Module)
 }
 function runPlugins (type, opts) {
@@ -254,7 +255,7 @@ function getRegisterParams (filepath, config) {
   };
   return { Module, require, requireAsync }
 }
-function runCode (code, path, config) {
+function runInThisContext (code, path, config) {
   code = "'use strict';\n" + code;
   const { Module, require, requireAsync } = getRegisterParams(path, config);
   const fn = new Function('require', 'requireAsync', 'module', 'exports', '__filename', code);
@@ -262,7 +263,7 @@ function runCode (code, path, config) {
   return Module
 }
 function jsPlugin ({resource, path, config}) {
-  return runCode(resource, path, config)
+  return runInThisContext(resource, path, config)
 }
 
 var index = {

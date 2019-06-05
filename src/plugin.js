@@ -55,6 +55,4 @@ export function addDefaultPlugins () {
   map.add('js', jsPlugin)
 }
 
-window.a = map
-
 export default map
