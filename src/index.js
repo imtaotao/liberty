@@ -1,8 +1,8 @@
+import jsPlugin from './js-plugin'
 import { init, addPlugin } from './api'
 
-const rustleModule = {
+export default {
   init,
+  jsPlugin,
   addPlugin,
 }
-
-export default rustleModule

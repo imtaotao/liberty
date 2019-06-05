@@ -10,8 +10,11 @@ function check (filepath, path) {
 }
 
 function getRegisterParams (filepath, config) {
-  const Module = { exports: {} }
-  
+  const Module = {
+    exports: {},
+    __rustleModule: true,
+  }
+
   const require = path => {
     if (check(filepath, path)) {
       return importModule(path, config, false)
@@ -37,5 +40,5 @@ function runCode (code, path, config) {
 }
 
 export default function jsPlugin ({resource, path, config}) {
-  return runCode(resource, path, config).exports
+  return runCode(resource, path, config)
 }

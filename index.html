@@ -12,6 +12,8 @@
     RM.addPlugin('json', opts => {
       return JSON.parse(opts.resource)
     })
+    RM.addPlugin('grs', RM.jsPlugin)
+
     RM.init('dev/index.js')
   </script>
 </body>

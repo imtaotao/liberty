@@ -4,7 +4,7 @@ import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
 import { warn, realpath, getExname, convertToReadOnly } from './utils'
 
-export function init (url, otps = {}) {
+export function init (url, opts = {}) {
   if (this.config && this.config.init) {
     warn('can\'t repeat init')
   }
@@ -12,19 +12,30 @@ export function init (url, otps = {}) {
     warn('error')
   }
 
-  otps.init = true
-  otps.baseURL = url
-  this.config = convertToReadOnly({...config, ...otps})
+  opts.init = true
+  opts.baseURL = url
+  this.config = convertToReadOnly(Object.assign(config, opts))
   
   addDefaultPlugins()
   importModule(url, this.config, true)
 }
 
-export function addPlugin (type, fn) {
+export function addPlugin (exname, fn) {
   if (this.config && this.config.init) {
     throw Error('Unable to add plugin after initialization')
   } else {
-    Plugins.add(type, fn)
+    if (typeof exname === 'string') {
+      const types = exname.split(' ')
+      if (types.length) {
+        if (types.length === 1) {
+          Plugins.add(types[0], fn)
+        } else {
+          for (const type of types) {
+            Plugins.add(type, fn)
+          }
+        }
+      }
+    }
   }
 }
 
@@ -38,14 +49,21 @@ export function importModule (path, config, isAsync) {
 
   // if aleady cache, return cache result
   if (Module) {
+    const result = getModuleResult(Module)
     return !isAsync
-      ? Module
-      : Promise.resolve(Module)
+      ? result
+      : Promise.resolve(result)
   }
 
   return isAsync
     ? getModuleForAsync(pathOpts, config)
     : getModuleForSync(pathOpts, config)
+}
+
+function getModuleResult (Module) {
+  return typeof Module === 'object' && Module.__rustleModule
+    ? Module.exports
+    : Module
 }
 
 function getRealPath (path, config) {
@@ -63,19 +81,23 @@ function getRealPath (path, config) {
 
 function getModuleForAsync ({path, exname}, config) {
   return asyncRequest(path, config).then(resource => {
-    const Module = runPlugins(exname, { path, config, resource })
-    cacheModule(path, Module)
-    return Module
+    return processResource(path, exname, config, resource)
   })
 }
 
 function getModuleForSync ({path, exname}, config) {
   const resource = syncRequest(path, config)
-  const Module = runPlugins(exname, { path, config, resource })
-  cacheModule(path, Module)
-  return Module
+  return processResource(path, exname, config, resource)
 }
 
+// process resource
+function processResource (path, exname, config, resource) {
+  const Module = runPlugins(exname, { path, exname, config, resource })
+  cacheModule(path, Module)
+  return getModuleResult(Module)
+}
+
+// use plugins
 function runPlugins (type, opts) {
   opts = Plugins.run('*', opts)
   return Plugins.run(type, opts).resource
