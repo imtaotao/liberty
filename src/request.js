@@ -1,9 +1,9 @@
-function request (url, async) {
+function request (url, isAsync) {
   const xhr = new XMLHttpRequest()
-  xhr.open('GET', url, async)
+  xhr.open('GET', url, isAsync)
   xhr.send()
 
-  if (async) {
+  if (isAsync) {
     return new Promise((resolve, reject) => {
       xhr.onload = resolve
       xhr.onerror = reject
