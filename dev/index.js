@@ -16,4 +16,5 @@ require('dev/b.js')
 require('dev/../dev/b.js')
 require('dev/tt/../../dev/b.js')
 
+console.log(__filename)
 exports.index = 'tao'

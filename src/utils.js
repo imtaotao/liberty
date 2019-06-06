@@ -37,7 +37,6 @@ export const realpath = path => {
   /*
     a//b/c ==> a/b/c
     a///b/////c ==> a/b/c
-    DOUBLE_DOT_RE matches a/b/c//../d path correctly only if replace // with / first
   */
   path = path.replace(MULTI_SLASH_RE, "$1/")
 

@@ -10,7 +10,7 @@ function run (fn, require, requireAsync, _module, _exports, filename) {
   }
 }
 
-function getRegisterParams (config) {
+function getRegisterParams (config, responseURL) {
   const Module = { exports: {} }
   readOnly(Module, '__rustleModule', true)
 
@@ -21,9 +21,11 @@ function getRegisterParams (config) {
 }
 
 function runInThisContext (code, path, responseURL, config) {
-  code = "'use strict';\n" + code
+  if (config.useStrict) {
+    code = "'use strict';\n" + code
+  }
 
-  const { Module, require, requireAsync } = getRegisterParams(config)
+  const { Module, require, requireAsync } = getRegisterParams(config, responseURL)
   const fn = new Function('require', 'requireAsync', 'module', 'exports', '__filename', code)
 
   // cache js module，because allow circulation import. like cjs
