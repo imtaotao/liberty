@@ -1,6 +1,6 @@
-import cacheModule from './cache'
 import { importModule } from './api'
 import { warn, readOnly } from './utils'
+import cacheModule, { responseURLModules } from './cache'
 
 function run (fn, require, requireAsync, _module, _exports, filename) {
   try {
@@ -20,7 +20,7 @@ function getRegisterParams (config) {
   return { Module, require, requireAsync }
 }
 
-function runInThisContext (code, path, config) {
+function runInThisContext (code, path, responseURL, config) {
   code = "'use strict';\n" + code
 
   const { Module, require, requireAsync } = getRegisterParams(config)
@@ -28,13 +28,14 @@ function runInThisContext (code, path, config) {
 
   // cache js module，because allow circulation import. like cjs
   cacheModule.cache(path, Module)
+  responseURLModules.cache(responseURL, Module)
 
   // run code
-  run(fn, require, requireAsync, Module, Module.exports, path)
+  run(fn, require, requireAsync, Module, Module.exports, responseURL)
 
   return Module
 }
 
 export default function jsPlugin ({resource, path, config, responseURL}) {
-  return runInThisContext(resource, path, config)
+  return runInThisContext(resource, path, responseURL, config)
 }

@@ -6,7 +6,7 @@
   const m = await rm.import('./xx', context)
 ```
 
-2. addType
+2. addPlugin
 ```js
   // 只能同步方式
   rm.add('.json', (...args) => {

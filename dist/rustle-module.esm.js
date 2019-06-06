@@ -1,24 +1,26 @@
-const Modules = new Map();
-var cacheModule = {
-  cache (path, Module, update) {
+class Cache {
+  constructor () {
+    this.Modules = new Map();
+  }
+  cache (path, Module,) {
     if (update || !this.has(path)) {
-      Modules.set(path, Module);
+      this.Modules.set(path, Module);
     }
-  },
+  }
   has (path) {
-    return Modules.has(path)
-  },
+    return this.Modules.has(path)
+  }
   get (path) {
-    return Modules.get(path) || null
-  },
+    return this.Modules.get(path) || null
+  }
   clear (path) {
-    return Modules.delete(path)
-  },
+    return this.Modules.delete(path)
+  }
   clearAll () {
-    return Modules.clear()
-  },
-};
-window.a = Modules;
+    return this.Modules.clear()
+  }
+}
+var cacheModule = new Cache();
 
 var config = {
   init: false,
@@ -88,7 +90,10 @@ function dealWithResponse (url, xhr) {
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       if (typeof xhr.response === 'string') {
-        return xhr.response
+        return {
+          resource: xhr.response,
+          responseURL: xhr.responseURL,
+        }
       }
     } else if (xhr.status === 404) {
       throw Error(`Module "${url}" is not found`)
@@ -107,9 +112,6 @@ function syncRequest (url) {
 const DOT_RE = /\/\.\//g;
 const DOUBLE_DOT_RE = /\/[^/]+\/\.\.\//;
 const MULTI_SLASH_RE = /([^:/])\/+\//g;
-const warn = (msg, isWarn) => {
-  throw Error(msg)
-};
 const readOnly = (obj, key, value) => {
   Object.defineProperty(obj, key, {
     value: value,
@@ -214,16 +216,23 @@ function getRealPath (path, config) {
   }
 }
 function getModuleForAsync ({path, exname}, config) {
-  return asyncRequest(path, config).then(resource => {
-    return processResource(path, exname, config, resource)
+  return asyncRequest(path, config).then(res => {
+    return processResource(path, exname, config, res)
   })
 }
 function getModuleForSync ({path, exname}, config) {
-  const resource = syncRequest(path, config);
-  return processResource(path, exname, config, resource)
+  const res = syncRequest(path, config);
+  return processResource(path, exname, config, res)
 }
-function processResource (path, exname, config, resource) {
-  const Module = runPlugins(exname, { path, exname, config, resource });
+function processResource (path, exname, config, res) {
+  const Module = runPlugins(exname, {
+    path,
+    exname,
+    config,
+    resource: res.resource,
+    responseURL: res.responseURL || null,
+  });
+  cacheModule.cache(path, Module);
   return getModuleResult(Module)
 }
 function runPlugins (type, opts) {
@@ -231,36 +240,29 @@ function runPlugins (type, opts) {
   return map.run(type, opts).resource
 }
 
-function check (filepath, path) {
-  if (filepath === path) {
-    warn('can\'t import self');
-    return false
+function run (fn, require, requireAsync, _module, _exports, filename) {
+  try {
+    return fn(require, requireAsync, _module, _exports, filename)
+  } catch (error) {
+    throw new Error(error)
   }
-  return true
 }
-function getRegisterParams (filepath, config) {
+function getRegisterParams (config) {
   const Module = { exports: {} };
   readOnly(Module, '__rustleModule', true);
-  const require = path => {
-    if (check(filepath, path)) {
-      return importModule(path, config, false)
-    }
-  };
-  const requireAsync = path => {
-    if (check(filepath, path)) {
-      return importModule(path, config, true)
-    }
-  };
+  const require = path => importModule(path, config, false);
+  const requireAsync = path => importModule(path, config, true);
   return { Module, require, requireAsync }
 }
 function runInThisContext (code, path, config) {
   code = "'use strict';\n" + code;
-  const { Module, require, requireAsync } = getRegisterParams(path, config);
+  const { Module, require, requireAsync } = getRegisterParams(config);
   const fn = new Function('require', 'requireAsync', 'module', 'exports', '__filename', code);
-  fn(require, requireAsync, Module, Module.exports, path);
+  cacheModule.cache(path, Module);
+  run(fn, require, requireAsync, Module, Module.exports, path);
   return Module
 }
-function jsPlugin ({resource, path, config}) {
+function jsPlugin ({resource, path, config, responseURL}) {
   return runInThisContext(resource, path, config)
 }
 

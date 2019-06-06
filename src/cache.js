@@ -1,27 +1,32 @@
-const Modules = new Map()
+class Cache {
+  constructor () {
+    this.Modules = new Map()
+  }
 
-export default {
   cache (path, Module, update) {
     if (update || !this.has(path)) {
-      Modules.set(path, Module)
+      this.Modules.set(path, Module)
     }
-  },
+  }
 
   has (path) {
-    return Modules.has(path)
-  },
+    return this.Modules.has(path)
+  }
 
   get (path) {
-    return Modules.get(path) || null
-  },
+    return this.Modules.get(path) || null
+  }
 
   clear (path) {
-    return Modules.delete(path)
-  },
+    return this.Modules.delete(path)
+  }
 
   clearAll () {
-    return Modules.clear()
-  },
+    return this.Modules.clear()
+  }
 }
 
-window.a = Modules
+export default new Cache()
+
+// if we don't recognize the path, we will eventually validate responseURL of xhr
+export const responseURLModules = new Cache()

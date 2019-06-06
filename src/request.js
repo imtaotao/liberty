@@ -1,18 +1,42 @@
+import { responseURLModules } from './cache'
+
 function request (url, isAsync) {
+  const getCache = xhr => {
+    const responseURL = xhr.responseURL
+    if (responseURLModules.has(responseURL)) {
+      // if we found cache module, abort request
+      xhr.abort()
+      return {
+        responseURL,
+        resource: null,
+        haveCache: true,
+      }
+    }
+    return null
+  }
+
   const xhr = new XMLHttpRequest()
   xhr.open('GET', url, isAsync)
   xhr.send()
 
   if (isAsync) {
     return new Promise((resolve, reject) => {
+      xhr.onreadystatechange = () => {
+        const cache = getCache(xhr)
+        cache && resolve({ target: cache })
+      }
+
       xhr.onload = resolve
       xhr.onerror = reject
     })
   }
-  return xhr
+
+  return getCache(xhr) || xhr
 }
 
 function dealWithResponse (url, xhr) {
+  if (xhr.haveCache) return xhr
+
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       if (typeof xhr.response === 'string') {

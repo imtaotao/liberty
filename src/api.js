@@ -1,7 +1,7 @@
 import config from './config'
-import cacheModule from './cache'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
+import cacheModule, { responseURLModules } from './cache'
 import { realpath, getExname, readOnly, readOnlyMap } from './utils'
 
 export function init (url, opts = {}) {
@@ -74,12 +74,6 @@ export function importModule (path, config, isAsync) {
     : getModuleForSync(pathOpts, config)
 }
 
-function getModuleResult (Module) {
-  return typeof Module === 'object' && Module.__rustleModule
-    ? Module.exports
-    : Module
-}
-
 function getRealPath (path, config) {
   let exname = getExname(path)
   if (!exname) {
@@ -104,18 +98,28 @@ function getModuleForSync ({path, exname}, config) {
   return processResource(path, exname, config, res)
 }
 
-// process resource
-function processResource (path, exname, config, res) {
-  const Module = runPlugins(exname, {
-    path,
-    exname,
-    config,
-    resource: res.resource,
-    responseURL: res.responseURL || null,
-  })
+function getModuleResult (Module) {
+  return typeof Module === 'object' && Module.__rustleModule
+    ? Module.exports
+    : Module
+}
 
-  // we need other Module
+// process resource
+function processResource (path, exname, config, {resource, responseURL}) {
+  const Module = responseURLModules.has(responseURL)
+    ? responseURLModules.get(responseURL)
+    : runPlugins(exname, {
+        path,
+        exname,
+        config,
+        resource,
+        responseURL,
+      })
+
+  // we need cache other Module
   cacheModule.cache(path, Module)
+  responseURLModules.cache(responseURL, Module)
+
   return getModuleResult(Module)
 }
 

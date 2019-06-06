@@ -1,13 +1,19 @@
-module.exports = 'indexFile'
+// module.exports = 'indexFile'
 
-const AM = require('dev/a.grs')
-const BM = require('dev/b.js')
+// const AM = require('dev/a.grs')
+// const BM = require('dev/b.js')
 
-requireAsync('dev/b.js').then(bm => {
-  console.assert(bm === BM, 'bm 不等')
-  console.assert(BM.fn === bm.fn, 'bm fn 不等')
-})
+// requireAsync('dev/b.js').then(bm => {
+//   console.assert(bm === BM, 'bm 不等')
+//   console.assert(BM.fn === bm.fn, 'bm fn 不等')
+// })
 
-console.assert(BM.one === 1, 'bm one 的值不对')
-console.assert(BM.word('a') === 'a11', 'bm word 方法返回错误')
-console.assert(AM.vue.name === 'Vue', 'vue 函数的名字不对')
+// console.assert(BM.one === 1, 'bm one 的值不对')
+// console.assert(BM.word('a') === 'a11', 'bm word 方法返回错误')
+// console.assert(AM.vue.name === 'Vue', 'vue 函数的名字不对')
+
+require('dev/b.js')
+require('dev/../dev/b.js')
+require('dev/tt/../../dev/b.js')
+
+exports.index = 'tao'
