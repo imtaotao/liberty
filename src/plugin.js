@@ -52,7 +52,7 @@ const map = {
 // add default plugings
 export function addDefaultPlugins () {
   map.add('*', opts => opts.resource)
-  map.add('js', jsPlugin)
+  map.add('.js', jsPlugin)
 }
 
 export default map

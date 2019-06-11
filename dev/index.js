@@ -1,6 +1,6 @@
 // module.exports = 'indexFile'
 
-// const AM = require('dev/a.grs')
+const AM = require('/dev/a.grs')
 // const BM = require('dev/b.js')
 
 // requireAsync('dev/b.js').then(bm => {
@@ -12,9 +12,9 @@
 // console.assert(BM.word('a') === 'a11', 'bm word 方法返回错误')
 // console.assert(AM.vue.name === 'Vue', 'vue 函数的名字不对')
 
-require('dev/b.js')
-require('dev/../dev/b.js')
-require('dev/tt/../../dev/b.js')
+require('./b.js')
+require('./../dev/b.js')
+require('./../../dev/b.js')
 
 console.log(__filename)
-exports.index = 'tao'
+exports.index = 'indexFile'

@@ -1,21 +1,29 @@
+import Path from './path'
 import { importModule } from './api'
 import { warn, readOnly } from './utils'
 import cacheModule, { responseURLModules } from './cache'
 
-function run (fn, require, requireAsync, _module, _exports, filename) {
+function run (fn, require, requireAsync, _module, _exports, filename, path) {
   try {
     return fn(require, requireAsync, _module, _exports, filename)
   } catch (error) {
+    cacheModule.clear(path)
     throw new Error(error)
   }
 }
 
 function getRegisterParams (config, responseURL) {
   const Module = { exports: {} }
+
+  // get current module pathname
+  const envInfo = Path.parse(responseURL)
+  const envPath = (new URL(envInfo.dir)).pathname
+  const parentInfo = { envPath }
+
   readOnly(Module, '__rustleModule', true)
 
-  const require = path => importModule(path, config, false)
-  const requireAsync = path => importModule(path, config, true)
+  const require = path => importModule(path, parentInfo, config, false)
+  const requireAsync = path => importModule(path, parentInfo, config, true)
 
   return { Module, require, requireAsync }
 }
@@ -33,7 +41,7 @@ function runInThisContext (code, path, responseURL, config) {
   responseURLModules.cache(responseURL, Module)
 
   // run code
-  run(fn, require, requireAsync, Module, Module.exports, responseURL)
+  run(fn, require, requireAsync, Module, Module.exports, responseURL, path)
 
   return Module
 }

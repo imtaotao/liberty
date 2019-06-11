@@ -23,27 +23,20 @@ export const readOnlyMap = obj => {
   return newObj
 }
 
-export const getExname = path => {
-  const index = path.lastIndexOf('.')
-  return index > -1
-    ? path.substr(index + 1)
-    : null
-}
+// export const realpath = path => {
+//   // /a/b/./c/./d ==> /a/b/c/d
+//   path = path.replace(DOT_RE, "/")
 
-export const realpath = path => {
-  // /a/b/./c/./d ==> /a/b/c/d
-  path = path.replace(DOT_RE, "/")
+//   /*
+//     a//b/c ==> a/b/c
+//     a///b/////c ==> a/b/c
+//   */
+//   path = path.replace(MULTI_SLASH_RE, "$1/")
 
-  /*
-    a//b/c ==> a/b/c
-    a///b/////c ==> a/b/c
-  */
-  path = path.replace(MULTI_SLASH_RE, "$1/")
+//   // a/b/c/../../d  ==>  a/b/../d  ==>  a/d
+//   while (path.match(DOUBLE_DOT_RE)) {
+//     path = path.replace(DOUBLE_DOT_RE, "/")
+//   }
 
-  // a/b/c/../../d  ==>  a/b/../d  ==>  a/d
-  while (path.match(DOUBLE_DOT_RE)) {
-    path = path.replace(DOUBLE_DOT_RE, "/")
-  }
-
-  return path
-}
+//   return path
+// }

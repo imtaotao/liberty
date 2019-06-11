@@ -1,8 +1,12 @@
+import Path from './path'
 import config from './config'
+import { readOnly, readOnlyMap } from './utils'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
 import cacheModule, { responseURLModules } from './cache'
-import { realpath, getExname, readOnly, readOnlyMap } from './utils'
+
+// inspect path
+const PROTOCOL = /\w+:\/\/?/g
 
 export function init (url, opts = {}) {
   if (this.config && this.config.init) {
@@ -17,7 +21,7 @@ export function init (url, opts = {}) {
     readOnlyMap(Object.assign(config, opts))
   )
   addDefaultPlugins()
-  importModule(url, this.config, true)
+  importModule(url, {}, this.config, true)
 }
 
 export function addPlugin (exname, fn) {
@@ -53,12 +57,12 @@ export function ready (paths) {
   )
 }
 
-export function importModule (path, config, isAsync) {
+export function importModule (path, parentInfo, config, isAsync) {
   if (typeof path !== 'string') {
     throw TypeError('"path" must be a string')
   }
 
-  const pathOpts = getRealPath(path, config)
+  const pathOpts = getRealPath(path, parentInfo, config)
 
   // if aleady cache, return cache result
   if (cacheModule.has(pathOpts.path)) {
@@ -74,16 +78,22 @@ export function importModule (path, config, isAsync) {
     : getModuleForSync(pathOpts, config)
 }
 
-function getRealPath (path, config) {
-  let exname = getExname(path)
+function getRealPath (path, parentInfo, config) {
+  let realPath = path
+  let exname = Path.extname(path)
+
   if (!exname) {
     exname = config.defaultExname
-    path += ('.' + config.defaultExname)
+    path += config.defaultExname
+  }
+
+  if (!Path.isAbsolute(path) && !PROTOCOL.test(path)) {
+    realPath = Path.join(parentInfo.envPath || '/', path)
   }
 
   return {
     exname,
-    path: realpath(path),
+    path: realPath,
   }
 }
 
@@ -115,7 +125,7 @@ function processResource (path, exname, config, {resource, responseURL}) {
         resource,
         responseURL,
       })
-
+  
   // we need cache other Module
   cacheModule.cache(path, Module)
   responseURLModules.cache(responseURL, Module)
