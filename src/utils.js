@@ -2,10 +2,6 @@ const DOT_RE = /\/\.\//g // /./ -> /
 const DOUBLE_DOT_RE = /\/[^/]+\/\.\.\//  // /../ -> /
 const MULTI_SLASH_RE = /([^:/])\/+\//g // a/../ => /
 
-export const warn = (msg, isWarn) => {
-  throw Error(msg)
-}
-
 export const readOnly = (obj, key, value) => {
   Object.defineProperty(obj, key, {
     value: value,
@@ -21,6 +17,11 @@ export const readOnlyMap = obj => {
     }
   }
   return newObj
+}
+
+export const getLegalName = name => {
+  if (!window[name]) return name
+  return getLegalName(name + '1')
 }
 
 // export const realpath = path => {

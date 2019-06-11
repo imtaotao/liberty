@@ -395,7 +395,27 @@ var posix = {
 var config = {
   init: false,
   useStrict: true,
-  defaultExname: 'js',
+  defaultExname: '.js',
+};
+
+const readOnly = (obj, key, value) => {
+  Object.defineProperty(obj, key, {
+    value: value,
+    writable: false,
+  });
+};
+const readOnlyMap = obj => {
+  const newObj = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      readOnly(newObj, key, obj[key]);
+    }
+  }
+  return newObj
+};
+const getLegalName = name => {
+  if (!window[name]) return name
+  return getLegalName(name + '1')
 };
 
 class Plugins {
@@ -442,7 +462,7 @@ const map = {
 };
 function addDefaultPlugins () {
   map.add('*', opts => opts.resource);
-  map.add('js', jsPlugin);
+  map.add('.js', jsPlugin);
 }
 
 class Cache {
@@ -522,22 +542,7 @@ function syncRequest (url) {
   return dealWithResponse(url, xhr)
 }
 
-const readOnly = (obj, key, value) => {
-  Object.defineProperty(obj, key, {
-    value: value,
-    writable: false,
-  });
-};
-const readOnlyMap = obj => {
-  const newObj = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      readOnly(newObj, key, obj[key]);
-    }
-  }
-  return newObj
-};
-
+const PROTOCOL = /\w+:\/\/?/g;
 function init (url, opts = {}) {
   if (this.config && this.config.init) {
     throw new Error('can\'t repeat init')
@@ -548,7 +553,7 @@ function init (url, opts = {}) {
     readOnlyMap(Object.assign(config, opts))
   );
   addDefaultPlugins();
-  importModule(url, this.config, true);
+  importModule(url, {}, this.config, true);
 }
 function addPlugin (exname, fn) {
   if (this.config && this.config.init) {
@@ -568,11 +573,11 @@ function addPlugin (exname, fn) {
     }
   }
 }
-function importModule (path, config, isAsync) {
+function importModule (path, parentInfo, config, isAsync) {
   if (typeof path !== 'string') {
     throw TypeError('"path" must be a string')
   }
-  const pathOpts = getRealPath(path, config);
+  const pathOpts = getRealPath(path, parentInfo, config);
   if (cacheModule.has(pathOpts.path)) {
     const Module = cacheModule.get(pathOpts.path);
     const result = getModuleResult(Module);
@@ -584,15 +589,15 @@ function importModule (path, config, isAsync) {
     ? getModuleForAsync(pathOpts, config)
     : getModuleForSync(pathOpts, config)
 }
-function getRealPath (path, config) {
+function getRealPath (path, parentInfo, config) {
   let realPath = path;
   let exname = posix.extname(path);
   if (!exname) {
     exname = config.defaultExname;
-    path += ('.' + config.defaultExname);
+    path += config.defaultExname;
   }
-  if (posix.isAbsolute(path)) {
-    realPath = posix.join(config.envPath || '/', path);
+  if (!posix.isAbsolute(path) && !PROTOCOL.test(path)) {
+    realPath = posix.join(parentInfo.envPath || '/', path);
   }
   return {
     exname,
@@ -632,29 +637,53 @@ function runPlugins (type, opts) {
   return map.run(type, opts).resource
 }
 
-function run (fn, require, requireAsync, _module, _exports, filename) {
-  try {
-    return fn(require, requireAsync, _module, _exports, filename)
-  } catch (error) {
-    throw new Error(error)
-  }
+function run (scriptCode, rigisterWindowObject, windowModuleName) {
+  const node = document.createElement('script');
+  node.text = scriptCode;
+  node.name = 'fsdfds';
+  window[windowModuleName] = rigisterWindowObject;
+  document.body.append(node);
+  document.body.removeChild(node);
+  delete window[windowModuleName];
 }
 function getRegisterParams (config, responseURL) {
   const Module = { exports: {} };
+  const envInfo = posix.parse(responseURL);
+  const envPath = (new URL(envInfo.dir)).pathname;
+  const parentInfo = { envPath };
   readOnly(Module, '__rustleModule', true);
-  const require = path => importModule(path, config, false);
-  const requireAsync = path => importModule(path, config, true);
-  return { Module, require, requireAsync }
+  const require = path => importModule(path, parentInfo, config, false);
+  const requireAsync = path => importModule(path, parentInfo, config, true);
+  return {
+    Module,
+    require,
+    requireAsync,
+    dirname: envInfo.dir,
+  }
 }
 function runInThisContext (code, path, responseURL, config) {
   if (config.useStrict) {
     code = "'use strict';\n" + code;
   }
-  const { Module, require, requireAsync } = getRegisterParams(config, responseURL);
-  const fn = new Function('require', 'requireAsync', 'module', 'exports', '__filename', code);
+  const windowModuleName = getLegalName('__rustleModuleObject');
+  const parmas = ['require', 'requireAsync', 'module', 'exports', '__filename', '__dirname'];
+  const { dirname, Module, require, requireAsync } = getRegisterParams(config, responseURL);
+  const rigisterWindowObject = {
+    require,
+    requireAsync,
+    module: Module,
+    __dirname: dirname,
+    exports: Module.exports,
+    __filename: responseURL,
+  };
+  const scriptCode =
+    `(function ${getLegalName(path.replace(/[\/.:]/g, '_'))} (${parmas.join(',')}) {` +
+    `\n${code}` +
+    `\n})(${windowModuleName}.${parmas.join(`,${windowModuleName}.`)})`;
   cacheModule.cache(path, Module);
   responseURLModules.cache(responseURL, Module);
-  run(fn, require, requireAsync, Module, Module.exports, responseURL);
+  run(scriptCode, rigisterWindowObject, windowModuleName);
+  cacheModule.clear(path);
   return Module
 }
 function jsPlugin ({resource, path, config, responseURL}) {
