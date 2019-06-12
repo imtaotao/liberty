@@ -1,5 +1,6 @@
 import Path from './path'
-import { importModule } from './api'
+import sourcemap from './sourcemap'
+import { importAll, importModule } from './api'
 import { readOnly, getLegalName } from './utils'
 import cacheModule, { responseURLModules } from './cache'
 
@@ -7,7 +8,6 @@ function run (scriptCode, rigisterWindowObject, windowModuleName) {
   // run script
   const node = document.createElement('script')
   node.text = scriptCode
-  node.name = 'fsdfds'
 
   window[windowModuleName] = rigisterWindowObject
   document.body.append(node)
@@ -16,23 +16,26 @@ function run (scriptCode, rigisterWindowObject, windowModuleName) {
   delete window[windowModuleName]
 }
 
-function getRegisterParams (config, responseURL) {
+function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} }
 
   // get current module pathname
   const envInfo = Path.parse(responseURL)
-  const envPath = (new URL(envInfo.dir)).pathname
-  const parentInfo = { envPath }
+  const envDir = (new URL(envInfo.dir)).pathname
+  const parentInfo = {
+    envDir,
+    envPath: path,
+  }
 
   readOnly(Module, '__rustleModule', true)
 
   const require = path => importModule(path, parentInfo, config, false)
-  const requireAsync = path => importModule(path, parentInfo, config, true)
+  require.async = path => importModule(path, parentInfo, config, true)
+  require.all = paths => importAll(paths, parentInfo, config)
 
   return {
     Module,
     require,
-    requireAsync,
     dirname: envInfo.dir,
   }
 }
@@ -43,21 +46,22 @@ function runInThisContext (code, path, responseURL, config) {
   }
 
   const windowModuleName = getLegalName('__rustleModuleObject')
-  const parmas = ['require', 'requireAsync', 'module', 'exports', '__filename', '__dirname']
-  const { dirname, Module, require, requireAsync } = getRegisterParams(config, responseURL)
+  const parmas = ['require', 'module', 'exports', '__filename', '__dirname']
+  const { dirname, Module, require } = getRegisterParams(config, path, responseURL)
   const rigisterWindowObject = {
     require,
-    requireAsync,
     module: Module,
     __dirname: dirname,
     exports: Module.exports,
     __filename: responseURL,
   }
 
-  const scriptCode =
+  let scriptCode =
     `(function ${getLegalName(path.replace(/[\/.:]/g, '_'))} (${parmas.join(',')}) {` +
     `\n${code}` +
-    `\n})(${windowModuleName}.${parmas.join(`,${windowModuleName}.`)})`
+    `\n}).call(undefined, window.${windowModuleName}.${parmas.join(`,window.${windowModuleName}.`)});`
+
+  scriptCode += `\n${sourcemap(scriptCode, responseURL)}`
 
   // cache js module，because allow circulation import. like cjs
   cacheModule.cache(path, Module)
@@ -65,6 +69,7 @@ function runInThisContext (code, path, responseURL, config) {
 
   // run code
   run(scriptCode, rigisterWindowObject, windowModuleName)
+
   // clear cache, because run script throw error
   cacheModule.clear(path)
 

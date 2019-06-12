@@ -9,9 +9,22 @@
 <body>
   <script src='./dist/rustle-module.min.js'></script>
   <script>
+    function createMap (res) {
+      // console.log(res.path)
+      return JSON.stringify({
+        version: 3,
+        sources: [res.path],
+        names: ["sayHello", "greeting", "Name", "console", "log"],
+        mappings: "AAAA,QAASA,KAEL,GACIC,GAAW,UAAYC,IAC3BC,SAAQC,IAAIH,GAGhBD",
+        // file: "hello.min.js",
+        // sourceRoot: "",
+        // sourcesContent: ["function sayHello()\n{\n    var name = \"Fundebug\";\n    var greeting = \"Hello, \" + Name;\n    console.log(greeting);\n}\n\nsayHello();\n"]
+      })
+    }
+
     RM.addPlugin('.grs', RM.plugins.jsPlugin)
     RM.addPlugin('.json', opts => JSON.parse(opts.resource))
-    RM.init('dev/index.js')
+    RM.init()('/dev/index.js')
   </script>
   <!-- <script src='./esm/a.js' type="module"></script> -->
 </body>

@@ -8,25 +8,36 @@ import cacheModule, { responseURLModules } from './cache'
 // inspect path
 const PROTOCOL = /\w+:\/\/?/g
 
-export function init (url, opts = {}) {
+export function init (opts = {}) {
   if (this.config && this.config.init) {
-    throw new Error('can\'t repeat init')
+    throw new Error('can\'t repeat init.')
   }
 
   opts.init = true
-  opts.baseURL = url
 
   // set config attribute
   readOnly(this, 'config',
     readOnlyMap(Object.assign(config, opts))
   )
-  addDefaultPlugins()
-  importModule(url, {}, this.config, true)
+
+  return url => {
+    if (!Path.isAbsolute(url)) {
+      throw Error('the startup path must be an absolute path.')
+    }
+
+    const parentConfig = {
+      envDir: '/',
+      envPath: url,
+    }
+    readOnly(this.config, 'baseURL', url)
+    addDefaultPlugins()
+    importModule(url, parentConfig, this.config, true)
+  }
 }
 
 export function addPlugin (exname, fn) {
   if (this.config && this.config.init) {
-    throw Error('Unable to add plugin after initialization')
+    throw Error('Unable to add plugin after initialization.')
   } else {
     if (typeof exname === 'string') {
       const types = exname.split(' ')
@@ -43,27 +54,23 @@ export function addPlugin (exname, fn) {
   }
 }
 
-// waiting for the modules to be loaded, and then continue to work
-export function ready (paths) {
-  if (!this.config || !this.config.init) {
-    throw new Error('must be initialized before use')
+// load multiple modules
+export function importAll (paths, parentInfo, config) {
+  if (Array.isArray(paths)) {
+    return Promise.all(
+      paths.map(path => importModule(path, parentInfo, config, true))
+    )
   }
-  if (!Array.isArray(paths)) {
-    throw TypeError('"paths" must be an array')
-  }
-
-  return Promise.all(
-    paths.map(path => importModule(path, this.config, true))
-  )
+  return importModule(path, parentInfo, config, true)
 }
 
+// deal with async or sync request and cache module
 export function importModule (path, parentInfo, config, isAsync) {
-  if (typeof path !== 'string') {
-    throw TypeError('"path" must be a string')
+  if (!path || typeof path !== 'string') {
+    throw TypeError('"path" must be a string.')
   }
 
   const pathOpts = getRealPath(path, parentInfo, config)
-
   // if aleady cache, return cache result
   if (cacheModule.has(pathOpts.path)) {
     const Module = cacheModule.get(pathOpts.path)
@@ -78,23 +85,33 @@ export function importModule (path, parentInfo, config, isAsync) {
     : getModuleForSync(pathOpts, config)
 }
 
-function getRealPath (path, parentInfo, config) {
-  let realPath = path
-  let exname = Path.extname(path)
+// load module static resource
+export function ready (paths) {
+  const config = this.config
+  if (!config || !config.init) {
+    throw Error('this method must be called after initialization.')
+  }
 
+  const { baseURL, defaultExname } = config
+}
+
+// jugement the path and make a deal
+function getRealPath (path, parentInfo, config) {
+  if (path === '.' || path === './') {
+    path = parentInfo.envPath
+  }
+
+  let exname = Path.extname(path)
   if (!exname) {
-    exname = config.defaultExname
     path += config.defaultExname
+    exname = config.defaultExname
   }
 
   if (!Path.isAbsolute(path) && !PROTOCOL.test(path)) {
-    realPath = Path.join(parentInfo.envPath || '/', path)
+    path = Path.join(parentInfo.envDir, path)
   }
 
-  return {
-    exname,
-    path: realPath,
-  }
+  return { path, exname }
 }
 
 function getModuleForAsync ({path, exname}, config) {

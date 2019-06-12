@@ -1,3 +1,4 @@
+console.log(12222)
 // module.exports = 'indexFile'
 
 // const AM = require('/dev/a.grs')
@@ -17,5 +18,11 @@
 // require('./../../dev/b.js')
 
 console.log(__filename, __dirname)
-console.log(require('./index').index)
+// console.log(require('./b').index)
 exports.index = 'indexFile'
+
+// require.all(['./a.grs', './b']).then(res => {
+//   console.log(res)
+// })
+
+console.log(222);
