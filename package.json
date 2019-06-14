@@ -1,5 +1,5 @@
 {
-  "name": "@rustle/module",
+  "name": "liberty",
   "version": "1.0.0",
   "description": "一个自用的模块加载器",
   "main": "index.js",

@@ -81,11 +81,11 @@ export async function ready (paths = [], entrance) {
 // load multiple modules
 export function importAll (paths, parentInfo, config) {
   if (Array.isArray(paths)) {
-    return Promise.all(
-      paths.map(path => importModule(path, parentInfo, config, true))
-    )
+    return paths.length === 0
+      ? Promise.resolve([])
+      : Promise.all(paths.map(path => importModule(path, parentInfo, config, true)))
   }
-  return importModule(path, parentInfo, config, true)
+  throw Error(`Paths [${paths}] must be an array.\n\n ---> from [${parentInfo.envPath}]\n`)
 }
 
 // deal with async or sync request and cache module

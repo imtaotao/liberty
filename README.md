@@ -6,7 +6,7 @@
 Liberty.init('entry.js')
 
 // entry.js
-for(let i = 0; i < 5; i++) {
+for (let i = 0; i < 5; i++) {
   console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'));
 }
 ```
@@ -27,7 +27,7 @@ for(let i = 0; i < 5; i++) {
 ```
 
 ### addPlugin(exname: string, callback: Function) : void
-这个方法用于添加插件，在整个模块的加载过程中，会请求到源文件的源码字符串，在添加特定的插件后，此种类型的文件或经过这个插件的处理，插件的回调返回需要处理的源码字符串即可，否则会导致模块不被处理。所以如果有 ts 插件，那么都可以使用这种方式处理 ts 文件了 O(∩_∩)O~
+这个方法用于添加插件，在整个模块的加载过程中，会请求到源文件的源码字符串，在添加特定的插件后，此种类型的文件会经过这个插件的处理，插件的回调需要返回源码字符串，否则会导致模块不被处理。（所以如果有 ts 插件，那么都可以使用这种方式处理 ts 文件了 O(∩_∩)O~）
 
 ```js
   Liberty.addPlugin('.json', res => JSON.parse(res.resource))
@@ -62,6 +62,7 @@ for(let i = 0; i < 5; i++) {
   // 下面这种方式同上
   Liberty.ready(urls).then(() => start(urls[0]))
 ```
+> 后面考虑先对所有文件源码进行过滤，遍历出需要的文件，先把所有静态资源准备好再执行代码，这样就可以避免手动调用 ready 方法
 
 ### plugins: Object
 plugins 属性存放着默认的一些插件方法（暂时只有一个）
