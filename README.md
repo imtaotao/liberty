@@ -109,3 +109,7 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
     console.log(am.a) // 1
   })
 ```
+
+<h2>
+  <a download=Liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/rustle-module.min.js>下载</a>
+<h2>
