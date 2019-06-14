@@ -1,7 +1,12 @@
 ## 自用的 module 加载器
 学习和自用，没什么别的用途
 
-## [demo](./dev)
+## CDN
+```html
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/rustle-module.min.js"></script>
+```
+
+## [Demo](./dev)
 ```js
 Liberty.init('entry.js')
 
@@ -62,7 +67,7 @@ for (let i = 0; i < 5; i++) {
   // 下面这种方式同上
   Liberty.ready(urls).then(() => start(urls[0]))
 ```
-> 后面考虑先对所有文件源码进行过滤，遍历出需要的文件，先把所有静态资源准备好再执行代码，这样就可以避免手动调用 ready 方法
+> 后面考虑先对所有文件源码进行过滤，遍历出需要的文件，先把所有静态资源准备好再执行代码，这样就可以避免手动调用 ready 方法。但是，基于运行时做，很难过滤出需要的文件，除非给个特定的语法限制
 
 ### plugins: Object
 plugins 属性存放着默认的一些插件方法（暂时只有一个）
@@ -112,5 +117,5 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 ```
 
 <h2>
-  <a download=Liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/rustle-module.min.js>下载</a>
+  <a download=Liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/rustle-module.min.js>Download</a>
 <h2>

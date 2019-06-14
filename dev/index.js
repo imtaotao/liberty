@@ -23,3 +23,6 @@ exports.vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.com
 require.all(['./a.grs', './b']).then(res => {
   console.log(res)
 })
+
+const Grass = require('https://cdn.jsdelivr.net/gh/imtaotao/Grass/dist/grass.min.js')
+console.log(Grass)

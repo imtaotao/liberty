@@ -7,12 +7,12 @@
   <title>Document</title>
 </head>
 <body>
-  <script src='./dist/rustle-module.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/rustle-module.min.js"></script>
   <script>
     Liberty.addPlugin('.grs', Liberty.plugins.jsPlugin)
     Liberty.addPlugin('.json', opts => JSON.parse(opts.resource))
+
     const start = Liberty.init()
-    
     start('/dev/index')
     // Liberty.ready([
     //   '/dev//index.js',
