@@ -21,7 +21,7 @@ function base64Encode (number) {
 
 // encode to VLQ
 function encoded (aValue) {
-  let encoded = ""
+  let encoded = ''
   let digit
   let vlq = toVLQSigned(aValue)
 
@@ -37,31 +37,17 @@ function encoded (aValue) {
   return encoded
 }
 
-window.e = encoded
-function genSourcemapUrl (content) {
-  return `//@ sourceMappingURL=data:application/json;base64,${btoa(JSON.stringify(content))}`
-}
-
 function genMappings (source) {
-  console.log(source);
-  let mappings = ''
   const lines = source.split('\n')
-
-  for (let i = 0; i < lines.length; i++) {
-    console.log(lines[i], i);
-    const destLine = i - 2
-    const res = `${encoded(0)}${encoded(0)}${encoded(destLine > 0 ? destLine : 0)}${encoded(0)};`
-    mappings += res
-  }
-  return mappings
+  const code = l => encoded(0) + encoded(0) + encoded(l) + encoded(0)
+  return code(-1) + ';' + lines.map(v => code(1)).join(';')
 }
 
 export default function (resource, responseURL) {
-  return genSourcemapUrl({
-    // names: [],
+  const content = JSON.stringify({
     version: 3,
     sources: [responseURL],
     mappings: genMappings(resource),
-    // mappings: 'AAAA'
   })
+  return `//@ sourceMappingURL=data:application/json;base64,${btoa(content)}`
 }

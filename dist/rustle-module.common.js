@@ -394,6 +394,42 @@ var posix = {
   posix: null
 };
 
+class Cache {
+  constructor () {
+    this.Modules = new Map();
+  }
+  cache (path, Module, update) {
+    if (update || !this.has(path)) {
+      this.Modules.set(path, Module);
+    }
+  }
+  has (path) {
+    return this.Modules.has(path)
+  }
+  get (path) {
+    return this.Modules.get(path) || null
+  }
+  clear (path) {
+    return this.Modules.delete(path)
+  }
+  clearAll () {
+    return this.Modules.clear()
+  }
+}
+var cache = new Cache();
+const responseURLModules = new Cache();
+
+function genSourcemapUrl (content) {
+  return `//@ sourceMappingURL=data:application/json;base64,${btoa(JSON.stringify(content))}`
+}
+function jsSourcemap (resource, responseURL) {
+  var a = genSourcemapUrl({
+    version: 3,
+    sources: [responseURL, 'http://127.0.0.1:8080/dev/b.js'],
+  });
+  return a
+}
+
 var config = {
   init: false,
   useStrict: true,
@@ -467,31 +503,6 @@ function addDefaultPlugins () {
   map.add('.js', jsPlugin);
 }
 
-class Cache {
-  constructor () {
-    this.Modules = new Map();
-  }
-  cache (path, Module, update) {
-    if (update || !this.has(path)) {
-      this.Modules.set(path, Module);
-    }
-  }
-  has (path) {
-    return this.Modules.has(path)
-  }
-  get (path) {
-    return this.Modules.get(path) || null
-  }
-  clear (path) {
-    return this.Modules.delete(path)
-  }
-  clearAll () {
-    return this.Modules.clear()
-  }
-}
-var cacheModule = new Cache();
-const responseURLModules = new Cache();
-
 function request (url, isAsync) {
   const getCache = xhr => {
     const responseURL = xhr.responseURL;
@@ -545,21 +556,30 @@ function syncRequest (url) {
 }
 
 const PROTOCOL = /\w+:\/\/?/g;
-function init (url, opts = {}) {
+function init (opts = {}) {
   if (this.config && this.config.init) {
-    throw new Error('can\'t repeat init')
+    throw new Error('can\'t repeat init.')
   }
   opts.init = true;
-  opts.baseURL = url;
   readOnly(this, 'config',
     readOnlyMap(Object.assign(config, opts))
   );
-  addDefaultPlugins();
-  importModule(url, {}, this.config, true);
+  return url => {
+    if (!posix.isAbsolute(url)) {
+      throw Error('the startup path must be an absolute path.')
+    }
+    const parentConfig = {
+      envDir: '/',
+      envPath: url,
+    };
+    readOnly(this.config, 'baseURL', url);
+    addDefaultPlugins();
+    importModule(url, parentConfig, this.config, true);
+  }
 }
 function addPlugin (exname, fn) {
   if (this.config && this.config.init) {
-    throw Error('Unable to add plugin after initialization')
+    throw Error('Unable to add plugin after initialization.')
   } else {
     if (typeof exname === 'string') {
       const types = exname.split(' ');
@@ -575,13 +595,21 @@ function addPlugin (exname, fn) {
     }
   }
 }
+function importAll (paths, parentInfo, config) {
+  if (Array.isArray(paths)) {
+    return Promise.all(
+      paths.map(path => importModule(path, parentInfo, config, true))
+    )
+  }
+  return importModule(path, parentInfo, config, true)
+}
 function importModule (path, parentInfo, config, isAsync) {
-  if (typeof path !== 'string') {
-    throw TypeError('"path" must be a string')
+  if (!path || typeof path !== 'string') {
+    throw TypeError('"path" must be a string.')
   }
   const pathOpts = getRealPath(path, parentInfo, config);
-  if (cacheModule.has(pathOpts.path)) {
-    const Module = cacheModule.get(pathOpts.path);
+  if (cache.has(pathOpts.path)) {
+    const Module = cache.get(pathOpts.path);
     const result = getModuleResult(Module);
     return !isAsync
       ? result
@@ -591,20 +619,25 @@ function importModule (path, parentInfo, config, isAsync) {
     ? getModuleForAsync(pathOpts, config)
     : getModuleForSync(pathOpts, config)
 }
+function ready (paths) {
+  const config = this.config;
+  if (!config || !config.init) {
+    throw Error('this method must be called after initialization.')
+  }
+}
 function getRealPath (path, parentInfo, config) {
-  let realPath = path;
+  if (path === '.' || path === './') {
+    path = parentInfo.envPath;
+  }
   let exname = posix.extname(path);
   if (!exname) {
-    exname = config.defaultExname;
     path += config.defaultExname;
+    exname = config.defaultExname;
   }
   if (!posix.isAbsolute(path) && !PROTOCOL.test(path)) {
-    realPath = posix.join(parentInfo.envPath || '/', path);
+    path = posix.join(parentInfo.envDir, path);
   }
-  return {
-    exname,
-    path: realPath,
-  }
+  return { path, exname }
 }
 function getModuleForAsync ({path, exname}, config) {
   return asyncRequest(path, config).then(res => {
@@ -630,7 +663,7 @@ function processResource (path, exname, config, {resource, responseURL}) {
         resource,
         responseURL,
       });
-  cacheModule.cache(path, Module);
+  cache.cache(path, Module);
   responseURLModules.cache(responseURL, Module);
   return getModuleResult(Module)
 }
@@ -642,24 +675,26 @@ function runPlugins (type, opts) {
 function run (scriptCode, rigisterWindowObject, windowModuleName) {
   const node = document.createElement('script');
   node.text = scriptCode;
-  node.name = 'fsdfds';
   window[windowModuleName] = rigisterWindowObject;
   document.body.append(node);
   document.body.removeChild(node);
   delete window[windowModuleName];
 }
-function getRegisterParams (config, responseURL) {
+function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} };
   const envInfo = posix.parse(responseURL);
-  const envPath = (new URL(envInfo.dir)).pathname;
-  const parentInfo = { envPath };
+  const envDir = (new URL(envInfo.dir)).pathname;
+  const parentInfo = {
+    envDir,
+    envPath: path,
+  };
   readOnly(Module, '__rustleModule', true);
   const require = path => importModule(path, parentInfo, config, false);
-  const requireAsync = path => importModule(path, parentInfo, config, true);
+  require.async = path => importModule(path, parentInfo, config, true);
+  require.all = paths => importAll(paths, parentInfo, config);
   return {
     Module,
     require,
-    requireAsync,
     dirname: envInfo.dir,
   }
 }
@@ -668,24 +703,24 @@ function runInThisContext (code, path, responseURL, config) {
     code = "'use strict';\n" + code;
   }
   const windowModuleName = getLegalName('__rustleModuleObject');
-  const parmas = ['require', 'requireAsync', 'module', 'exports', '__filename', '__dirname'];
-  const { dirname, Module, require, requireAsync } = getRegisterParams(config, responseURL);
+  const parmas = ['require', 'module', 'exports', '__filename', '__dirname'];
+  const { dirname, Module, require } = getRegisterParams(config, path, responseURL);
   const rigisterWindowObject = {
     require,
-    requireAsync,
     module: Module,
     __dirname: dirname,
     exports: Module.exports,
     __filename: responseURL,
   };
-  const scriptCode =
+  let scriptCode =
     `(function ${getLegalName(path.replace(/[\/.:]/g, '_'))} (${parmas.join(',')}) {` +
     `\n${code}` +
-    `\n})(${windowModuleName}.${parmas.join(`,${windowModuleName}.`)})`;
-  cacheModule.cache(path, Module);
+    `\n}).call(undefined, window.${windowModuleName}.${parmas.join(`,window.${windowModuleName}.`)});`;
+  scriptCode += `\n${jsSourcemap(scriptCode, responseURL)}`;
+  cache.cache(path, Module);
   responseURLModules.cache(responseURL, Module);
   run(scriptCode, rigisterWindowObject, windowModuleName);
-  cacheModule.clear(path);
+  cache.clear(path);
   return Module
 }
 function jsPlugin ({resource, path, config, responseURL}) {
@@ -695,9 +730,12 @@ function jsPlugin ({resource, path, config, responseURL}) {
 var index = {
   init,
   path: posix,
+  cache,
+  ready,
   addPlugin,
   plugins: {
     jsPlugin,
+    jsSourcemap,
   }
 };
 

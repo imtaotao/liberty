@@ -41,10 +41,6 @@ function getRegisterParams (config, path, responseURL) {
 }
 
 function runInThisContext (code, path, responseURL, config) {
-  if (config.useStrict) {
-    code = "'use strict';\n" + code
-  }
-
   const windowModuleName = getLegalName('__rustleModuleObject')
   const parmas = ['require', 'module', 'exports', '__filename', '__dirname']
   const { dirname, Module, require } = getRegisterParams(config, path, responseURL)
