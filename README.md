@@ -1,7 +1,7 @@
 ## 自用的 module 加载器
 学习和自用，没什么别的用途
 
-## demo
+## [demo](./dev)
 ```js
 Liberty.init('entry.js')
 

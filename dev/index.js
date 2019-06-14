@@ -1,6 +1,8 @@
 const AM = require('./a.grs')
-const BM = require('./b.js')
+const BM = require('./b')
+const CJ = require('./c.json')
 
+console.log(CJ);
 require.async('./b.js').then(bm => {
   console.assert(bm === BM, 'bm 不等')
   console.assert(BM.fn === bm.fn, 'bm fn 不等')
@@ -20,6 +22,4 @@ exports.vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.com
 
 require.all(['./a.grs', './b']).then(res => {
   console.log(res)
-  console.timeEnd('no')
-  console.timeEnd('sucess')
 })
