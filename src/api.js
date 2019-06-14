@@ -3,7 +3,7 @@ import config from './config'
 import { readOnly, readOnlyMap } from './utils'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
-import cacheModule, { responseURLModules } from './cache'
+import cacheModule, { resourceCache, responseURLModules } from './cache'
 
 // inspect path
 const PROTOCOL = /\w+:\/\/?/g
@@ -13,28 +13,26 @@ export function init (opts = {}) {
   if (this.config && this.config.init) {
     throw new Error('Can\'t repeat init.')
   }
-
   opts.init = true
-
   // set config attribute
   readOnly(this, 'config',
     readOnlyMap(Object.assign(config, opts))
   )
 
-  return url => {
-    if (!url || !Path.isAbsolute(url)) {
+  return entrance => {
+    if (isStart) throw Error('Can\'t repeat start.')
+    if (!entrance || (!Path.isAbsolute(entrance) && !PROTOCOL.test(entrance))) {
       throw Error('The startup path must be an absolute path.')
     }
 
     isStart = true
-
     const parentConfig = {
       envDir: '/',
-      envPath: url,
+      envPath: entrance,
     }
-    readOnly(this.config, 'entrance', url)
+    readOnly(this.config, 'entrance', entrance)
     addDefaultPlugins()
-    importModule(url, parentConfig, this.config, true)
+    importModule(entrance, parentConfig, this.config, true)
   }
 }
 
@@ -55,6 +53,30 @@ export function addPlugin (exname, fn) {
       }
     }
   }
+}
+
+// load module static resource
+export async function ready (paths = [], entrance) {
+  const config = this.config
+  if (!config || !config.init) {
+    throw Error('This method must be called after initialization.')
+  }
+  if (isStart) {
+    throw Error('Static resources must be loaded before the module is loaded.')
+  }
+
+  await Promise.all(paths.map(p => {
+    const isProtocolUrl = PROTOCOL.test(p)
+    if (!isProtocolUrl) p = Path.normalize(p)
+    if (!Path.isAbsolute(p) && !isProtocolUrl) {
+      throw Error(`The path [${p}] must be an absolute path.`)
+    }
+    return asyncRequest(p, 'ready.method').then(resource => {
+      // cache static resource
+      resourceCache.cache(p, resource)
+    })
+  }))
+  return entrance
 }
 
 // load multiple modules
@@ -83,21 +105,9 @@ export function importModule (path, parentInfo, config, isAsync) {
       ? result
       : Promise.resolve(result)
   }
-
   return isAsync
     ? getModuleForAsync(pathOpts, config, envPath)
     : getModuleForSync(pathOpts, config, envPath)
-}
-
-// load module static resource
-export function ready (paths) {
-  const config = this.config
-  if (isStart) {
-    throw Error('Static resources must be loaded before the module is loaded.')
-  }
-  if (!config || !config.init) {
-    throw Error('This method must be called after initialization.')
-  }
 }
 
 // jugement the path and make a deal
@@ -111,22 +121,25 @@ function getRealPath (path, parentInfo, config) {
     path += config.defaultExname
     exname = config.defaultExname
   }
-
   if (!Path.isAbsolute(path) && !PROTOCOL.test(path)) {
     path = Path.join(parentInfo.envDir, path)
   }
-
   return { path, exname }
 }
 
-function getModuleForAsync ({path, exname}, config, envPath) {
-  return asyncRequest(path, envPath).then(res => {
-    return processResource(path, exname, config, res)
-  })
+// get Module
+async function getModuleForAsync ({path, exname}, config, envPath) {
+  // get static resource
+  const res = resourceCache.has(path)
+    ? resourceCache.get(path)
+    : await asyncRequest(path, envPath)
+  return processResource(path, exname, config, res)
 }
 
 function getModuleForSync ({path, exname}, config, envPath) {
-  const res = syncRequest(path, envPath)
+  const res = resourceCache.has(path)
+    ? resourceCache.get(path)
+    : syncRequest(path, envPath)
   return processResource(path, exname, config, res)
 }
 
@@ -151,7 +164,6 @@ function processResource (path, exname, config, {resource, responseURL}) {
   // we need cache other Module
   cacheModule.cache(path, Module)
   responseURLModules.cache(responseURL, Module)
-
   return getModuleResult(Module)
 }
 

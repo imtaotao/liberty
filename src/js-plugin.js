@@ -12,33 +12,25 @@ function run (scriptCode, rigisterObject, windowModuleName) {
   window[windowModuleName] = rigisterObject
   document.body.append(node)
   document.body.removeChild(node)
-
   delete window[windowModuleName]
 }
 
 function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} }
-
   // get current module pathname
-  const envInfo = Path.parse(responseURL)
-  const envDir = (new URL(envInfo.dir)).pathname
+  const dirname = Path.dirname(responseURL)
+  const envDir = (new URL(dirname)).pathname
   const parentInfo = {
     envDir,
     envPath: path,
   }
-
   readOnly(Module, '__rustleModule', true)
 
   // require methods
   const require = path => importModule(path, parentInfo, config, false)
   require.async = path => importModule(path, parentInfo, config, true)
   require.all = paths => importAll(paths, parentInfo, config)
-
-  return {
-    Module,
-    require,
-    dirname: envInfo.dir,
-  }
+  return { Module, require, dirname }
 }
 
 // create a object, rigister to window
@@ -67,7 +59,6 @@ function generateScriptCode (basecode, path, responseURL, parmas, config) {
    if (config.sourcemap) {
     scriptCode += `\n${sourcemap(scriptCode, responseURL)}`
   }
-
   return { moduleName, scriptCode }
 }
 
@@ -80,10 +71,8 @@ function runInThisContext (code, path, responseURL, config) {
   // cache js module，because allow circulation import. like cjs
   cacheModule.cache(path, Module)
   responseURLModules.cache(responseURL, Module)
-
   // run code
   run(scriptCode, rigisterObject, moduleName)
-
   // clear cache, because run script throw error
   cacheModule.clear(path)
   return Module

@@ -21,4 +21,6 @@ exports.vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.com
 
 require.all(['./a.grs', './b']).then(res => {
   console.log(res)
+  console.timeEnd('no')
+  console.timeEnd('sucess')
 })

@@ -14,11 +14,11 @@ function request (url, isAsync) {
     }
     return null
   }
-
   const xhr = new XMLHttpRequest()
   xhr.open('GET', url, isAsync)
   xhr.send()
 
+  // judged has cache
   if (isAsync) {
     return new Promise((resolve, reject) => {
       xhr.onreadystatechange = () => {
@@ -30,13 +30,11 @@ function request (url, isAsync) {
       xhr.onerror = reject
     })
   }
-
   return getCache(xhr) || xhr
 }
 
 function dealWithResponse (url, xhr, envPath) {
   if (xhr.haveCache) return xhr
-
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
       if (typeof xhr.response === 'string') {

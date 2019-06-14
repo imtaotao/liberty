@@ -12,11 +12,18 @@
     RM.addPlugin('.grs', RM.plugins.jsPlugin)
     RM.addPlugin('.json', opts => JSON.parse(opts.resource))
     
-    const start = RM.init({ sourcemap: 1 })
-    RM.ready()
-    start('/dev/index')
-  </script>
-  <!-- <script src='./esm/a.js' type="module"></script> -->
+    const start = RM.init()
+
+    RM.ready([
+      '/dev//index.js',
+      '/dev/b.js',
+      '/dev/a.grs',
+      'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'
+    ], '/dev/index')
+    .then(start)
+    
+    // console.time('no')
+    // start('/dev/index')
   </script>
 </body>
 </html>

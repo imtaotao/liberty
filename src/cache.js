@@ -27,6 +27,6 @@ class Cache {
 }
 
 export default new Cache()
-
+export const resourceCache = new Cache()
 // if we don't recognize the path, we will eventually validate responseURL of xhr
 export const responseURLModules = new Cache()
