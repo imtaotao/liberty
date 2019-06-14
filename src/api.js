@@ -64,7 +64,6 @@ export async function ready (paths = [], entrance) {
   if (isStart) {
     throw Error('Static resources must be loaded before the module is loaded.')
   }
-
   await Promise.all(paths.map(p => {
     const isProtocolUrl = PROTOCOL.test(p)
     if (!isProtocolUrl) p = Path.normalize(p)

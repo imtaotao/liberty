@@ -9,21 +9,18 @@
 <body>
   <script src='./dist/rustle-module.min.js'></script>
   <script>
-    RM.addPlugin('.grs', RM.plugins.jsPlugin)
-    RM.addPlugin('.json', opts => JSON.parse(opts.resource))
+    Liberty.addPlugin('.grs', Liberty.plugins.jsPlugin)
+    Liberty.addPlugin('.json', opts => JSON.parse(opts.resource))
+    const start = Liberty.init()
     
-    const start = RM.init()
-
-    RM.ready([
-      '/dev//index.js',
-      '/dev/b.js',
-      '/dev/a.grs',
-      'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'
-    ], '/dev/index')
-    .then(start)
-    
-    // console.time('no')
-    // start('/dev/index')
+    start('/dev/index')
+    // Liberty.ready([
+    //   '/dev//index.js',
+    //   '/dev/b.js',
+    //   '/dev/a.grs',
+    //   'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'
+    // ], '/dev/index')
+    // .then(start)
   </script>
 </body>
 </html>

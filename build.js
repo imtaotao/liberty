@@ -17,7 +17,7 @@ const umd = {
   output: {
     file: 'dist/rustle-module.min.js',
     format: 'umd',
-    name: 'RM',
+    name: 'Liberty',
   }
 }
 

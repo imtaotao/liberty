@@ -67,51 +67,7 @@ function normalizeStringPosix(path, allowAboveRoot) {
   }
   return res;
 }
-function _format(sep, pathObject) {
-  var dir = pathObject.dir || pathObject.root;
-  var base = pathObject.base || (pathObject.name || '') + (pathObject.ext || '');
-  if (!dir) {
-    return base;
-  }
-  if (dir === pathObject.root) {
-    return dir + base;
-  }
-  return dir + sep + base;
-}
 var posix = {
-  resolve: function resolve() {
-    var resolvedPath = '';
-    var resolvedAbsolute = false;
-    var cwd;
-    for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-      var path;
-      if (i >= 0)
-        path = arguments[i];
-      else {
-        if (cwd === undefined) {
-          cwd  = '/';
-        }
-        path = cwd;
-      }
-      assertPath(path);
-      if (path.length === 0) {
-        continue;
-      }
-      resolvedPath = path + '/' + resolvedPath;
-      resolvedAbsolute = path.charCodeAt(0) === 47 ;
-    }
-    resolvedPath = normalizeStringPosix(resolvedPath, !resolvedAbsolute);
-    if (resolvedAbsolute) {
-      if (resolvedPath.length > 0)
-        return '/' + resolvedPath;
-      else
-        return '/';
-    } else if (resolvedPath.length > 0) {
-      return resolvedPath;
-    } else {
-      return '.';
-    }
-  },
   normalize: function normalize(path) {
     assertPath(path);
     if (path.length === 0) return '.';
@@ -145,75 +101,6 @@ var posix = {
       return '.';
     return posix.normalize(joined);
   },
-  relative: function relative(from, to) {
-    assertPath(from);
-    assertPath(to);
-    if (from === to) return '';
-    from = posix.resolve(from);
-    to = posix.resolve(to);
-    if (from === to) return '';
-    var fromStart = 1;
-    for (; fromStart < from.length; ++fromStart) {
-      if (from.charCodeAt(fromStart) !== 47 )
-        break;
-    }
-    var fromEnd = from.length;
-    var fromLen = fromEnd - fromStart;
-    var toStart = 1;
-    for (; toStart < to.length; ++toStart) {
-      if (to.charCodeAt(toStart) !== 47 )
-        break;
-    }
-    var toEnd = to.length;
-    var toLen = toEnd - toStart;
-    var length = fromLen < toLen ? fromLen : toLen;
-    var lastCommonSep = -1;
-    var i = 0;
-    for (; i <= length; ++i) {
-      if (i === length) {
-        if (toLen > length) {
-          if (to.charCodeAt(toStart + i) === 47 ) {
-            return to.slice(toStart + i + 1);
-          } else if (i === 0) {
-            return to.slice(toStart + i);
-          }
-        } else if (fromLen > length) {
-          if (from.charCodeAt(fromStart + i) === 47 ) {
-            lastCommonSep = i;
-          } else if (i === 0) {
-            lastCommonSep = 0;
-          }
-        }
-        break;
-      }
-      var fromCode = from.charCodeAt(fromStart + i);
-      var toCode = to.charCodeAt(toStart + i);
-      if (fromCode !== toCode)
-        break;
-      else if (fromCode === 47 )
-        lastCommonSep = i;
-    }
-    var out = '';
-    for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
-      if (i === fromEnd || from.charCodeAt(i) === 47 ) {
-        if (out.length === 0)
-          out += '..';
-        else
-          out += '/..';
-      }
-    }
-    if (out.length > 0)
-      return out + to.slice(toStart + lastCommonSep);
-    else {
-      toStart += lastCommonSep;
-      if (to.charCodeAt(toStart) === 47 )
-        ++toStart;
-      return to.slice(toStart);
-    }
-  },
-  _makeLong: function _makeLong(path) {
-    return path;
-  },
   dirname: function dirname(path) {
     assertPath(path);
     if (path.length === 0) return '.';
@@ -235,59 +122,6 @@ var posix = {
     if (end === -1) return hasRoot ? '/' : '.';
     if (hasRoot && end === 1) return '//';
     return path.slice(0, end);
-  },
-  basename: function basename(path, ext) {
-    if (ext !== undefined && typeof ext !== 'string') throw new TypeError('"ext" argument must be a string');
-    assertPath(path);
-    var start = 0;
-    var end = -1;
-    var matchedSlash = true;
-    var i;
-    if (ext !== undefined && ext.length > 0 && ext.length <= path.length) {
-      if (ext.length === path.length && ext === path) return '';
-      var extIdx = ext.length - 1;
-      var firstNonSlashEnd = -1;
-      for (i = path.length - 1; i >= 0; --i) {
-        var code = path.charCodeAt(i);
-        if (code === 47 ) {
-            if (!matchedSlash) {
-              start = i + 1;
-              break;
-            }
-          } else {
-          if (firstNonSlashEnd === -1) {
-            matchedSlash = false;
-            firstNonSlashEnd = i + 1;
-          }
-          if (extIdx >= 0) {
-            if (code === ext.charCodeAt(extIdx)) {
-              if (--extIdx === -1) {
-                end = i;
-              }
-            } else {
-              extIdx = -1;
-              end = firstNonSlashEnd;
-            }
-          }
-        }
-      }
-      if (start === end) end = firstNonSlashEnd;else if (end === -1) end = path.length;
-      return path.slice(start, end);
-    } else {
-      for (i = path.length - 1; i >= 0; --i) {
-        if (path.charCodeAt(i) === 47 ) {
-            if (!matchedSlash) {
-              start = i + 1;
-              break;
-            }
-          } else if (end === -1) {
-          matchedSlash = false;
-          end = i + 1;
-        }
-      }
-      if (end === -1) return '';
-      return path.slice(start, end);
-    }
   },
   extname: function extname(path) {
     assertPath(path);
@@ -325,99 +159,11 @@ var posix = {
     }
     return path.slice(startDot, end);
   },
-  format: function format(pathObject) {
-    if (pathObject === null || typeof pathObject !== 'object') {
-      throw new TypeError('The "pathObject" argument must be of type Object. Received type ' + typeof pathObject);
-    }
-    return _format('/', pathObject);
-  },
-  parse: function parse(path) {
-    assertPath(path);
-    var ret = { root: '', dir: '', base: '', ext: '', name: '' };
-    if (path.length === 0) return ret;
-    var code = path.charCodeAt(0);
-    var isAbsolute = code === 47 ;
-    var start;
-    if (isAbsolute) {
-      ret.root = '/';
-      start = 1;
-    } else {
-      start = 0;
-    }
-    var startDot = -1;
-    var startPart = 0;
-    var end = -1;
-    var matchedSlash = true;
-    var i = path.length - 1;
-    var preDotState = 0;
-    for (; i >= start; --i) {
-      code = path.charCodeAt(i);
-      if (code === 47 ) {
-          if (!matchedSlash) {
-            startPart = i + 1;
-            break;
-          }
-          continue;
-        }
-      if (end === -1) {
-        matchedSlash = false;
-        end = i + 1;
-      }
-      if (code === 46 ) {
-          if (startDot === -1) startDot = i;else if (preDotState !== 1) preDotState = 1;
-        } else if (startDot !== -1) {
-        preDotState = -1;
-      }
-    }
-    if (startDot === -1 || end === -1 ||
-    preDotState === 0 ||
-    preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
-      if (end !== -1) {
-        if (startPart === 0 && isAbsolute) ret.base = ret.name = path.slice(1, end);else ret.base = ret.name = path.slice(startPart, end);
-      }
-    } else {
-      if (startPart === 0 && isAbsolute) {
-        ret.name = path.slice(1, startDot);
-        ret.base = path.slice(1, end);
-      } else {
-        ret.name = path.slice(startPart, startDot);
-        ret.base = path.slice(startPart, end);
-      }
-      ret.ext = path.slice(startDot, end);
-    }
-    if (startPart > 0) ret.dir = path.slice(0, startPart - 1);else if (isAbsolute) ret.dir = '/';
-    return ret;
-  },
   sep: '/',
   delimiter: ':',
   win32: null,
   posix: null
 };
-
-class Cache {
-  constructor () {
-    this.Modules = new Map();
-  }
-  cache (path, Module, update) {
-    if (update || !this.has(path)) {
-      this.Modules.set(path, Module);
-    }
-  }
-  has (path) {
-    return this.Modules.has(path)
-  }
-  get (path) {
-    return this.Modules.get(path) || null
-  }
-  clear (path) {
-    return this.Modules.delete(path)
-  }
-  clearAll () {
-    return this.Modules.clear()
-  }
-}
-var cache = new Cache();
-const responseURLModules = new Cache();
 
 const VLQ_BASE_SHIFT = 5;
 const VLQ_BASE = 1 << VLQ_BASE_SHIFT;
@@ -454,7 +200,7 @@ function genMappings (source) {
   const code = l => encoded(0) + encoded(0) + encoded(l) + encoded(0);
   return code(-1) + ';' + lines.map(v => code(1)).join(';')
 }
-function jsSourcemap (resource, responseURL) {
+function sourcemap (resource, responseURL) {
   const content = JSON.stringify({
     version: 3,
     sources: [responseURL],
@@ -536,6 +282,32 @@ function addDefaultPlugins () {
   map.add('.js', jsPlugin);
 }
 
+class Cache {
+  constructor () {
+    this.Modules = new Map();
+  }
+  cache (path, Module, update) {
+    if (update || !this.has(path)) {
+      this.Modules.set(path, Module);
+    }
+  }
+  has (path) {
+    return this.Modules.has(path)
+  }
+  get (path) {
+    return this.Modules.get(path) || null
+  }
+  clear (path) {
+    return this.Modules.delete(path)
+  }
+  clearAll () {
+    return this.Modules.clear()
+  }
+}
+var cacheModule = new Cache();
+const resourceCache = new Cache();
+const responseURLModules = new Cache();
+
 function request (url, isAsync) {
   const getCache = xhr => {
     const responseURL = xhr.responseURL;
@@ -598,18 +370,19 @@ function init (opts = {}) {
   readOnly(this, 'config',
     readOnlyMap(Object.assign(config, opts))
   );
-  return url => {
-    if (!url || !posix.isAbsolute(url)) {
+  return entrance => {
+    if (isStart) throw Error('Can\'t repeat start.')
+    if (!entrance || (!posix.isAbsolute(entrance) && !PROTOCOL.test(entrance))) {
       throw Error('The startup path must be an absolute path.')
     }
     isStart = true;
     const parentConfig = {
       envDir: '/',
-      envPath: url,
+      envPath: entrance,
     };
-    readOnly(this.config, 'entrance', url);
+    readOnly(this.config, 'entrance', entrance);
     addDefaultPlugins();
-    importModule(url, parentConfig, this.config, true);
+    importModule(entrance, parentConfig, this.config, true);
   }
 }
 function addPlugin (exname, fn) {
@@ -630,6 +403,26 @@ function addPlugin (exname, fn) {
     }
   }
 }
+async function ready (paths = [], entrance) {
+  const config = this.config;
+  if (!config || !config.init) {
+    throw Error('This method must be called after initialization.')
+  }
+  if (isStart) {
+    throw Error('Static resources must be loaded before the module is loaded.')
+  }
+  await Promise.all(paths.map(p => {
+    const isProtocolUrl = PROTOCOL.test(p);
+    if (!isProtocolUrl) p = posix.normalize(p);
+    if (!posix.isAbsolute(p) && !isProtocolUrl) {
+      throw Error(`The path [${p}] must be an absolute path.`)
+    }
+    return asyncRequest(p, 'ready.method').then(resource => {
+      resourceCache.cache(p, resource);
+    })
+  }));
+  return entrance
+}
 function importAll (paths, parentInfo, config) {
   if (Array.isArray(paths)) {
     return Promise.all(
@@ -644,8 +437,8 @@ function importModule (path, parentInfo, config, isAsync) {
     throw TypeError(`Require path [${path}] must be a string. \n\n ---> from [${envPath}]\n`)
   }
   const pathOpts = getRealPath(path, parentInfo, config);
-  if (cache.has(pathOpts.path)) {
-    const Module = cache.get(pathOpts.path);
+  if (cacheModule.has(pathOpts.path)) {
+    const Module = cacheModule.get(pathOpts.path);
     const result = getModuleResult(Module);
     return !isAsync
       ? result
@@ -654,15 +447,6 @@ function importModule (path, parentInfo, config, isAsync) {
   return isAsync
     ? getModuleForAsync(pathOpts, config, envPath)
     : getModuleForSync(pathOpts, config, envPath)
-}
-function ready (paths) {
-  const config = this.config;
-  if (isStart) {
-    throw Error('Static resources must be loaded before the module is loaded.')
-  }
-  if (!config || !config.init) {
-    throw Error('This method must be called after initialization.')
-  }
 }
 function getRealPath (path, parentInfo, config) {
   if (path === '.' || path === './') {
@@ -678,13 +462,16 @@ function getRealPath (path, parentInfo, config) {
   }
   return { path, exname }
 }
-function getModuleForAsync ({path, exname}, config, envPath) {
-  return asyncRequest(path, envPath).then(res => {
-    return processResource(path, exname, config, res)
-  })
+async function getModuleForAsync ({path, exname}, config, envPath) {
+  const res = resourceCache.has(path)
+    ? resourceCache.get(path)
+    : await asyncRequest(path, envPath);
+  return processResource(path, exname, config, res)
 }
 function getModuleForSync ({path, exname}, config, envPath) {
-  const res = syncRequest(path, envPath);
+  const res = resourceCache.has(path)
+    ? resourceCache.get(path)
+    : syncRequest(path, envPath);
   return processResource(path, exname, config, res)
 }
 function getModuleResult (Module) {
@@ -702,7 +489,7 @@ function processResource (path, exname, config, {resource, responseURL}) {
         resource,
         responseURL,
       });
-  cache.cache(path, Module);
+  cacheModule.cache(path, Module);
   responseURLModules.cache(responseURL, Module);
   return getModuleResult(Module)
 }
@@ -711,18 +498,18 @@ function runPlugins (type, opts) {
   return map.run(type, opts).resource
 }
 
-function run (scriptCode, rigisterWindowObject, windowModuleName) {
+function run (scriptCode, rigisterObject, windowModuleName) {
   const node = document.createElement('script');
   node.text = scriptCode;
-  window[windowModuleName] = rigisterWindowObject;
+  window[windowModuleName] = rigisterObject;
   document.body.append(node);
   document.body.removeChild(node);
   delete window[windowModuleName];
 }
 function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} };
-  const envInfo = posix.parse(responseURL);
-  const envDir = (new URL(envInfo.dir)).pathname;
+  const dirname = posix.dirname(responseURL);
+  const envDir = (new URL(dirname)).pathname;
   const parentInfo = {
     envDir,
     envPath: path,
@@ -731,11 +518,7 @@ function getRegisterParams (config, path, responseURL) {
   const require = path => importModule(path, parentInfo, config, false);
   require.async = path => importModule(path, parentInfo, config, true);
   require.all = paths => importAll(paths, parentInfo, config);
-  return {
-    Module,
-    require,
-    dirname: envInfo.dir,
-  }
+  return { Module, require, dirname }
 }
 function generateObject (config, path, responseURL) {
   const { dirname, Module, require } = getRegisterParams(config, path, responseURL);
@@ -748,25 +531,26 @@ function generateObject (config, path, responseURL) {
   }
 }
 function generateScriptCode (basecode, path, responseURL, parmas, config) {
-  const moduleName = getLegalName('__rustleModuleObject');
+  const randomId = Math.floor(Math.random() * 10000);
+  const moduleName = getLegalName('__rustleModuleObject') + randomId;
   let scriptCode =
     `(function ${getLegalName(path.replace(/[\/.:]/g, '_'))} (${parmas.join(',')}) {` +
     `\n${basecode}` +
     `\n}).call(undefined, window.${moduleName}.${parmas.join(`,window.${moduleName}.`)});`;
    if (config.sourcemap) {
-    scriptCode += `\n${jsSourcemap(scriptCode, responseURL)}`;
+    scriptCode += `\n${sourcemap(scriptCode, responseURL)}`;
   }
   return { moduleName, scriptCode }
 }
 function runInThisContext (code, path, responseURL, config) {
-  const rigisterWindowObject = generateObject(config, path, responseURL);
-  const parmas = Object.keys(rigisterWindowObject);
-  const Module = rigisterWindowObject.module;
+  const rigisterObject = generateObject(config, path, responseURL);
+  const Module = rigisterObject.module;
+  const parmas = Object.keys(rigisterObject);
   const { moduleName, scriptCode } = generateScriptCode(code, path, responseURL, parmas, config);
-  cache.cache(path, Module);
+  cacheModule.cache(path, Module);
   responseURLModules.cache(responseURL, Module);
-  run(scriptCode, rigisterWindowObject, moduleName);
-  cache.clear(path);
+  run(scriptCode, rigisterObject, moduleName);
+  cacheModule.clear(path);
   return Module
 }
 function jsPlugin ({resource, path, config, responseURL}) {
@@ -775,13 +559,10 @@ function jsPlugin ({resource, path, config, responseURL}) {
 
 var index = {
   init,
-  path: posix,
-  cache,
   ready,
   addPlugin,
   plugins: {
     jsPlugin,
-    jsSourcemap,
   }
 };
 

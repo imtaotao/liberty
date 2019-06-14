@@ -15,7 +15,6 @@ require('./../dev/b.js')
 require('./../../dev/b.js')
 
 console.log(__filename, __dirname)
-// console.log(require('./b').index)
 exports.index = 'indexFile'
 exports.vue = require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js')
 
