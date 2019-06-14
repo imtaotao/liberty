@@ -417,20 +417,53 @@ class Cache {
 var cache = new Cache();
 const responseURLModules = new Cache();
 
-function genSourcemapUrl (content) {
-  return `//@ sourceMappingURL=data:application/json;base64,${btoa(JSON.stringify(content))}`
+const VLQ_BASE_SHIFT = 5;
+const VLQ_BASE = 1 << VLQ_BASE_SHIFT;
+const VLQ_BASE_MASK = VLQ_BASE - 1;
+const VLQ_CONTINUATION_BIT = VLQ_BASE;
+const intToCharMap = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".split("");
+function toVLQSigned (aValue) {
+  return aValue < 0
+    ? ((-aValue) << 1) + 1
+    : (aValue << 1) + 0
+}
+function base64Encode (number) {
+  if (0 <= number && number < intToCharMap.length) {
+    return intToCharMap[number]
+  }
+  throw new TypeError("Must be between 0 and 63: " + number)
+}
+function encoded (aValue) {
+  let encoded = '';
+  let digit;
+  let vlq = toVLQSigned(aValue);
+  do {
+    digit = vlq & VLQ_BASE_MASK;
+    vlq >>>= VLQ_BASE_SHIFT;
+    if (vlq > 0) {
+      digit |= VLQ_CONTINUATION_BIT;
+    }
+    encoded += base64Encode(digit);
+  } while (vlq > 0)
+  return encoded
+}
+function genMappings (source) {
+  const lines = source.split('\n');
+  const code = l => encoded(0) + encoded(0) + encoded(l) + encoded(0);
+  return code(-1) + ';' + lines.map(v => code(1)).join(';')
 }
 function jsSourcemap (resource, responseURL) {
-  var a = genSourcemapUrl({
+  const content = JSON.stringify({
     version: 3,
-    sources: [responseURL, 'http://127.0.0.1:8080/dev/b.js'],
+    sources: [responseURL],
+    mappings: genMappings(resource),
   });
-  return a
+  return `//@ sourceMappingURL=data:application/json;base64,${btoa(content)}`
 }
 
 var config = {
   init: false,
-  useStrict: true,
+  sourcemap: true,
   defaultExname: '.js',
 };
 
@@ -529,7 +562,7 @@ function request (url, isAsync) {
   }
   return getCache(xhr) || xhr
 }
-function dealWithResponse (url, xhr) {
+function dealWithResponse (url, xhr, envPath) {
   if (xhr.haveCache) return xhr
   if (xhr.readyState === 4) {
     if (xhr.status === 200) {
@@ -540,37 +573,39 @@ function dealWithResponse (url, xhr) {
         }
       }
     } else if (xhr.status === 404) {
-      throw Error(`Module "${url}" is not found`)
+      throw Error(`Module [${url}] not found.\n\n --> from [${envPath}]\n`)
     }
   }
 }
-async function asyncRequest (url) {
+async function asyncRequest (url, envPath) {
   const { target: xhr } = await request(url, true);
-  return dealWithResponse(url, xhr)
+  return dealWithResponse(url, xhr, envPath)
 }
-function syncRequest (url) {
+function syncRequest (url, envPath) {
   const xhr = request(url, false);
-  return dealWithResponse(url, xhr)
+  return dealWithResponse(url, xhr, envPath)
 }
 
 const PROTOCOL = /\w+:\/\/?/g;
+let isStart = false;
 function init (opts = {}) {
   if (this.config && this.config.init) {
-    throw new Error('can\'t repeat init.')
+    throw new Error('Can\'t repeat init.')
   }
   opts.init = true;
   readOnly(this, 'config',
     readOnlyMap(Object.assign(config, opts))
   );
   return url => {
-    if (!posix.isAbsolute(url)) {
-      throw Error('the startup path must be an absolute path.')
+    if (!url || !posix.isAbsolute(url)) {
+      throw Error('The startup path must be an absolute path.')
     }
+    isStart = true;
     const parentConfig = {
       envDir: '/',
       envPath: url,
     };
-    readOnly(this.config, 'baseURL', url);
+    readOnly(this.config, 'entrance', url);
     addDefaultPlugins();
     importModule(url, parentConfig, this.config, true);
   }
@@ -602,8 +637,9 @@ function importAll (paths, parentInfo, config) {
   return importModule(path, parentInfo, config, true)
 }
 function importModule (path, parentInfo, config, isAsync) {
+  const envPath = parentInfo.envPath;
   if (!path || typeof path !== 'string') {
-    throw TypeError('"path" must be a string.')
+    throw TypeError(`Require path [${path}] must be a string. \n\n ---> from [${envPath}]\n`)
   }
   const pathOpts = getRealPath(path, parentInfo, config);
   if (cache.has(pathOpts.path)) {
@@ -614,13 +650,16 @@ function importModule (path, parentInfo, config, isAsync) {
       : Promise.resolve(result)
   }
   return isAsync
-    ? getModuleForAsync(pathOpts, config)
-    : getModuleForSync(pathOpts, config)
+    ? getModuleForAsync(pathOpts, config, envPath)
+    : getModuleForSync(pathOpts, config, envPath)
 }
 function ready (paths) {
   const config = this.config;
+  if (isStart) {
+    throw Error('Static resources must be loaded before the module is loaded.')
+  }
   if (!config || !config.init) {
-    throw Error('this method must be called after initialization.')
+    throw Error('This method must be called after initialization.')
   }
 }
 function getRealPath (path, parentInfo, config) {
@@ -637,13 +676,13 @@ function getRealPath (path, parentInfo, config) {
   }
   return { path, exname }
 }
-function getModuleForAsync ({path, exname}, config) {
-  return asyncRequest(path, config).then(res => {
+function getModuleForAsync ({path, exname}, config, envPath) {
+  return asyncRequest(path, envPath).then(res => {
     return processResource(path, exname, config, res)
   })
 }
-function getModuleForSync ({path, exname}, config) {
-  const res = syncRequest(path, config);
+function getModuleForSync ({path, exname}, config, envPath) {
+  const res = syncRequest(path, envPath);
   return processResource(path, exname, config, res)
 }
 function getModuleResult (Module) {
@@ -696,28 +735,35 @@ function getRegisterParams (config, path, responseURL) {
     dirname: envInfo.dir,
   }
 }
-function runInThisContext (code, path, responseURL, config) {
-  if (config.useStrict) {
-    code = "'use strict';\n" + code;
-  }
-  const windowModuleName = getLegalName('__rustleModuleObject');
-  const parmas = ['require', 'module', 'exports', '__filename', '__dirname'];
+function generateObject (config, path, responseURL) {
   const { dirname, Module, require } = getRegisterParams(config, path, responseURL);
-  const rigisterWindowObject = {
+  return {
     require,
     module: Module,
     __dirname: dirname,
     exports: Module.exports,
     __filename: responseURL,
-  };
+  }
+}
+function generateScriptCode (basecode, path, responseURL, parmas, config) {
+  const moduleName = getLegalName('__rustleModuleObject');
   let scriptCode =
     `(function ${getLegalName(path.replace(/[\/.:]/g, '_'))} (${parmas.join(',')}) {` +
-    `\n${code}` +
-    `\n}).call(undefined, window.${windowModuleName}.${parmas.join(`,window.${windowModuleName}.`)});`;
-  scriptCode += `\n${jsSourcemap(scriptCode, responseURL)}`;
+    `\n${basecode}` +
+    `\n}).call(undefined, window.${moduleName}.${parmas.join(`,window.${moduleName}.`)});`;
+   if (config.sourcemap) {
+    scriptCode += `\n${jsSourcemap(scriptCode, responseURL)}`;
+  }
+  return { moduleName, scriptCode }
+}
+function runInThisContext (code, path, responseURL, config) {
+  const rigisterWindowObject = generateObject(config, path, responseURL);
+  const parmas = Object.keys(rigisterWindowObject);
+  const Module = rigisterWindowObject.module;
+  const { moduleName, scriptCode } = generateScriptCode(code, path, responseURL, parmas, config);
   cache.cache(path, Module);
   responseURLModules.cache(responseURL, Module);
-  run(scriptCode, rigisterWindowObject, windowModuleName);
+  run(scriptCode, rigisterWindowObject, moduleName);
   cache.clear(path);
   return Module
 }

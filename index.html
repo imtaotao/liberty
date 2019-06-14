@@ -11,7 +11,10 @@
   <script>
     RM.addPlugin('.grs', RM.plugins.jsPlugin)
     RM.addPlugin('.json', opts => JSON.parse(opts.resource))
-    RM.init()('/dev/index.js')
+    
+    const start = RM.init({ sourcemap: 1 })
+    RM.ready()
+    start('/dev/index')
   </script>
   <!-- <script src='./esm/a.js' type="module"></script> -->
   </script>

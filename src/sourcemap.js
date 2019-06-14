@@ -40,6 +40,9 @@ function encoded (aValue) {
 function genMappings (source) {
   const lines = source.split('\n')
   const code = l => encoded(0) + encoded(0) + encoded(l) + encoded(0)
+
+  // the line is relative position,
+  // so, current position relative to the previous line, only to +1
   return code(-1) + ';' + lines.map(v => code(1)).join(';')
 }
 

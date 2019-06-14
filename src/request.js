@@ -34,7 +34,7 @@ function request (url, isAsync) {
   return getCache(xhr) || xhr
 }
 
-function dealWithResponse (url, xhr) {
+function dealWithResponse (url, xhr, envPath) {
   if (xhr.haveCache) return xhr
 
   if (xhr.readyState === 4) {
@@ -47,17 +47,17 @@ function dealWithResponse (url, xhr) {
         }
       }
     } else if (xhr.status === 404) {
-      throw Error(`Module "${url}" is not found`)
+      throw Error(`Module [${url}] not found.\n\n --> from [${envPath}]\n`)
     }
   }
 }
 
-export async function asyncRequest (url) {
+export async function asyncRequest (url, envPath) {
   const { target: xhr } = await request(url, true)
-  return dealWithResponse(url, xhr)
+  return dealWithResponse(url, xhr, envPath)
 }
 
-export function syncRequest (url) {
+export function syncRequest (url, envPath) {
   const xhr = request(url, false)
-  return dealWithResponse(url, xhr)
+  return dealWithResponse(url, xhr, envPath)
 }

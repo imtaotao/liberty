@@ -7,10 +7,11 @@ import cacheModule, { responseURLModules } from './cache'
 
 // inspect path
 const PROTOCOL = /\w+:\/\/?/g
+let isStart = false
 
 export function init (opts = {}) {
   if (this.config && this.config.init) {
-    throw new Error('can\'t repeat init.')
+    throw new Error('Can\'t repeat init.')
   }
 
   opts.init = true
@@ -21,15 +22,17 @@ export function init (opts = {}) {
   )
 
   return url => {
-    if (!Path.isAbsolute(url)) {
-      throw Error('the startup path must be an absolute path.')
+    if (!url || !Path.isAbsolute(url)) {
+      throw Error('The startup path must be an absolute path.')
     }
+
+    isStart = true
 
     const parentConfig = {
       envDir: '/',
       envPath: url,
     }
-    readOnly(this.config, 'baseURL', url)
+    readOnly(this.config, 'entrance', url)
     addDefaultPlugins()
     importModule(url, parentConfig, this.config, true)
   }
@@ -66,8 +69,9 @@ export function importAll (paths, parentInfo, config) {
 
 // deal with async or sync request and cache module
 export function importModule (path, parentInfo, config, isAsync) {
+  const envPath = parentInfo.envPath
   if (!path || typeof path !== 'string') {
-    throw TypeError('"path" must be a string.')
+    throw TypeError(`Require path [${path}] must be a string. \n\n ---> from [${envPath}]\n`)
   }
 
   const pathOpts = getRealPath(path, parentInfo, config)
@@ -81,18 +85,19 @@ export function importModule (path, parentInfo, config, isAsync) {
   }
 
   return isAsync
-    ? getModuleForAsync(pathOpts, config)
-    : getModuleForSync(pathOpts, config)
+    ? getModuleForAsync(pathOpts, config, envPath)
+    : getModuleForSync(pathOpts, config, envPath)
 }
 
 // load module static resource
 export function ready (paths) {
   const config = this.config
-  if (!config || !config.init) {
-    throw Error('this method must be called after initialization.')
+  if (isStart) {
+    throw Error('Static resources must be loaded before the module is loaded.')
   }
-
-  const { baseURL, defaultExname } = config
+  if (!config || !config.init) {
+    throw Error('This method must be called after initialization.')
+  }
 }
 
 // jugement the path and make a deal
@@ -114,14 +119,14 @@ function getRealPath (path, parentInfo, config) {
   return { path, exname }
 }
 
-function getModuleForAsync ({path, exname}, config) {
-  return asyncRequest(path, config).then(res => {
+function getModuleForAsync ({path, exname}, config, envPath) {
+  return asyncRequest(path, envPath).then(res => {
     return processResource(path, exname, config, res)
   })
 }
 
-function getModuleForSync ({path, exname}, config) {
-  const res = syncRequest(path, config)
+function getModuleForSync ({path, exname}, config, envPath) {
+  const res = syncRequest(path, envPath)
   return processResource(path, exname, config, res)
 }
 
