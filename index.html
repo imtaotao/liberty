@@ -16,7 +16,9 @@
     Liberty.addPlugin('.html', GrassPlugin)
     Liberty.addPlugin('.html', Liberty.plugins.jsPlugin)
 
-    const start = Liberty.init({defaultExname: '.html'})
+    const start = Liberty.init({
+      defaultExname: '.html',
+    })
     start('/dev/grs-test/index')
   </script>
 </body>

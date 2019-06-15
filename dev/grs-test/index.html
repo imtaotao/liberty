@@ -1,5 +1,5 @@
 <template name="tao">
-  <div id="taotao">
+  <div id="taotao" @click='this.changeName'>
     {{ test }}
     <One/>
     <Two :parent="'root'"/>
@@ -7,12 +7,10 @@
 </template>
 
 <script>
-  require('./pure')
-  const One = require('./one')
-  const Two = require('./two')
-  const Grass = require('./grass.js')
+  require('./pure')()
+  console.log(__filename)
 
-  class Root extends Grass.Component {
+  class Root extends require('./grass.js').Component {
     // #temp method
     constructor () {
       super()
@@ -20,10 +18,18 @@
         test: 'taotao',
       })
     }
+
+    changeName = e => {
+      this.state.test = this.state.test === 'taotao'
+        ? 'imtaotao'
+        : 'taotao'
+      console.log(this)
+    }
+
     component () {
       return {
-        One,
-        Two,
+        One: require('./one'),
+        Two: require('./two'),
       }
     }
   }
