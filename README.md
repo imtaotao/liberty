@@ -52,15 +52,13 @@ for (let i = 0; i < 5; i++) {
 ```
 
 ### ready(urls: string[], entry?: string)
-由于 require 方法需要同步请求资源，这个库内部使用同步的 xhr 去获取资源，当同步 xhr 会很影响用户体验，而且同步的 xhr 已经在标准中移除了，所以我们需要一种办法来等待资源加载完成后再执行代码。这个方法只能在初始化之后，start 方法没有调用之前使用。
-在所有的静态资源请求后再执行代码，就不会因为网络请求的时长而阻塞代码的执行
+由于 require 方法需要同步请求资源，这个库内部使用同步的 xhr 去获取资源，但是同步 xhr 会很影响用户体验，而且同步的 xhr 已经从标准中移除了，所以我们需要一种办法来等待资源加载完成后再执行代码。这个方法只能在 init 方法调用之后 start 方法调用之前使用。当所有的静态资源请求后，再执行代码，就不会因为网络请求的时长而阻塞代码的执行
 
 ```js
   const start = Liberty.init()
 
   // ready 请求的静态资源只能是绝对路径，相对路径是不被允许的
   const urls = ['/dev/index.js', '/dev/a.js', '/dev/b.json']
-
 
   // ready 方法只能在 init 方法后 start 方法调用前使用
   Liberty.ready(urls, urls[0]).then(start)
@@ -106,6 +104,7 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
     console.log(am.a) // 1
   })
   exports.a = 1
+  console.log(require('./a').a) // 1
 
 
   // b.js

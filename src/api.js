@@ -129,23 +129,33 @@ function getRealPath (path, parentInfo, config) {
 // get Module
 async function getModuleForAsync ({path, exname}, config, envPath) {
   // get static resource
-  const res = resourceCache.has(path)
+  const staticFile = resourceCache.has(path)
     ? resourceCache.get(path)
     : await asyncRequest(path, envPath)
-  return processResource(path, exname, config, res)
+
+  return genModule(path, exname, config, staticFile)
 }
 
 function getModuleForSync ({path, exname}, config, envPath) {
-  const res = resourceCache.has(path)
+  const staticFile = resourceCache.has(path)
     ? resourceCache.get(path)
     : syncRequest(path, envPath)
-  return processResource(path, exname, config, res)
+
+  return genModule(path, exname, config, staticFile)
 }
 
 function getModuleResult (Module) {
   return typeof Module === 'object' && Module.__rustleModule
     ? Module.exports
     : Module
+}
+
+// process static resource, then return module
+function genModule (path, exname, config, staticFile) {
+  const Module = processResource(path, exname, config, staticFile)
+  // clear static resource file and memory
+  resourceCache.clear(path)
+  return Module
 }
 
 // process resource

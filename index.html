@@ -7,20 +7,20 @@
   <title>Document</title>
 </head>
 <body>
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/rustle-module.min.js"></script>
+  <script src="./dist/rustle-module.min.js"></script>
   <script>
     Liberty.addPlugin('.grs', Liberty.plugins.jsPlugin)
     Liberty.addPlugin('.json', opts => JSON.parse(opts.resource))
 
     const start = Liberty.init()
-    start('/dev/index')
-    // Liberty.ready([
-    //   '/dev//index.js',
-    //   '/dev/b.js',
-    //   '/dev/a.grs',
-    //   'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'
-    // ], '/dev/index')
-    // .then(start)
+    // start('/dev/index')
+    Liberty.ready([
+      '/dev//index.js',
+      '/dev/b.js',
+      '/dev/a.grs',
+      'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'
+    ], '/dev/index')
+    .then(start)
   </script>
 </body>
 </html>
