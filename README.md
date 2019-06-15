@@ -1,5 +1,5 @@
 ## 自用的 module 加载器
-学习和自用，没什么别的用途
+学习和自用，没什么别的用途。因为是通过 xhr 去加载静态资源，所以必须有个服务器，而且不能跨域
 
 ## CDN
 ```html
@@ -7,13 +7,18 @@
 ```
 
 ## [Demo](./dev)
-```js
-Liberty.init('entry.js')
+```html
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
+  <script>
+    Liberty.init()('/entry.js')
+  </script>
+```
 
-// entry.js
-for (let i = 0; i < 5; i++) {
-  console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'));
-}
+```js
+  // entry.js
+  for (let i = 0; i < 5; i++) {
+    console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'));
+  }
 ```
 
 ## API
