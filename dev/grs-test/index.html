@@ -1,0 +1,32 @@
+<template name="tao">
+  <div id="taotao">
+    {{ test }}
+    <One/>
+    <Two :parent="'root'"/>
+  </div>
+</template>
+
+<script>
+  require('./pure')
+  const One = require('./one')
+  const Two = require('./two')
+  const Grass = require('./grass.js')
+
+  class Root extends Grass.Component {
+    // #temp method
+    constructor () {
+      super()
+      this.createResponseState({
+        test: 'taotao',
+      })
+    }
+    component () {
+      return {
+        One,
+        Two,
+      }
+    }
+  }
+
+  window.r = Root.$mount(document.getElementById('root'))
+</script>

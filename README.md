@@ -3,12 +3,12 @@
 
 ## CDN
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-1.0.0.min.js"></script>
 ```
 
 ## [Demo](./dev)
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-1.0.0.min.js"></script>
   <script>
     Liberty.init()('/entry.js')
   </script>

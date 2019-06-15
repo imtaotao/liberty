@@ -509,7 +509,7 @@ function generateScriptCode (basecode, path, responseURL, parmas, config) {
   const randomId = Math.floor(Math.random() * 10000);
   const moduleName = getLegalName('__rustleModuleObject') + randomId;
   let scriptCode =
-    `(function ${getLegalName(path.replace(/[\/.:]/g, '_'))} (${parmas.join(',')}) {` +
+    `(function ${getLegalName(path.replace(/[@#\/\.:-]/g, '_'))} (${parmas.join(',')}) {` +
     `\n${basecode}` +
     `\n}).call(undefined, window.${moduleName}.${parmas.join(`,window.${moduleName}.`)});`;
    if (config.sourcemap) {

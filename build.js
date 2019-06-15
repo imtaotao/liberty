@@ -3,11 +3,12 @@ const rollup = require('rollup')
 const cmd = require('rollup-plugin-commonjs')
 const cleanup = require('rollup-plugin-cleanup')
 const resolve = require('rollup-plugin-node-resolve')
+const version = require('./package.json').version
 
 const esm = {
   input: 'src/index.js',
   output: {
-    file: 'dist/liberty.esm.js',
+    file: `dist/liberty-${version}.esm.js`,
     format: 'es',
   }
 }
@@ -15,7 +16,7 @@ const esm = {
 const umd = {
   input: 'src/index.js',
   output: {
-    file: 'dist/liberty.min.js',
+    file: `dist/liberty-${version}.min.js`,
     format: 'umd',
     name: 'Liberty',
   }
@@ -24,7 +25,7 @@ const umd = {
 const cjs = {
   input: 'src/index.js',
   output: {
-    file: 'dist/liberty.common.js',
+    file: `dist/liberty-${version}.common.js`,
     format: 'cjs',
   }
 }

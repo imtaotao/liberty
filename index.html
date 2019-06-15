@@ -7,20 +7,14 @@
   <title>Document</title>
 </head>
 <body>
-  <script src="./dist/liberty.min.js"></script>
+  <div id="root"></div>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-1.0.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/grass-loader/src/liberty-plugin.js"></script>
   <script>
-    Liberty.addPlugin('.grs', Liberty.plugins.jsPlugin)
-    Liberty.addPlugin('.json', opts => JSON.parse(opts.resource))
-
-    const start = Liberty.init()
-    // start('/dev/index')
-    Liberty.ready([
-      '/dev//index.js',
-      '/dev/b.js',
-      '/dev/a.grs',
-      'https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'
-    ], '/dev/index')
-    .then(start)
+    // grs test
+    Liberty.addPlugin('.html', GrassPlugin)
+    Liberty.addPlugin('.html', Liberty.plugins.jsPlugin)
+    Liberty.init({defaultExname: '.html'})('/dev/grs-test/index')
   </script>
 </body>
 </html>
