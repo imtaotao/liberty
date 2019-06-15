@@ -3,7 +3,7 @@
 
 ## CDN
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/rustle-module.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
 ```
 
 ## [Demo](./dev)
@@ -116,5 +116,5 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 ```
 
 <h2>
-  <a download=Liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/rustle-module.min.js>Download</a>
+  <a download=Liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty.min.js>Download</a>
 <h2>

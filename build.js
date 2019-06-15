@@ -7,7 +7,7 @@ const resolve = require('rollup-plugin-node-resolve')
 const esm = {
   input: 'src/index.js',
   output: {
-    file: 'dist/rustle-module.esm.js',
+    file: 'dist/liberty.esm.js',
     format: 'es',
   }
 }
@@ -15,7 +15,7 @@ const esm = {
 const umd = {
   input: 'src/index.js',
   output: {
-    file: 'dist/rustle-module.min.js',
+    file: 'dist/liberty.min.js',
     format: 'umd',
     name: 'Liberty',
   }
@@ -24,7 +24,7 @@ const umd = {
 const cjs = {
   input: 'src/index.js',
   output: {
-    file: 'dist/rustle-module.common.js',
+    file: 'dist/liberty.common.js',
     format: 'cjs',
   }
 }
