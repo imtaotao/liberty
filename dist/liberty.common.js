@@ -277,7 +277,6 @@ class Cache {
 var cacheModule = new Cache();
 const resourceCache = new Cache();
 const responseURLModules = new Cache();
-window.a = resourceCache;
 
 function request (url, isAsync) {
   const getCache = xhr => {

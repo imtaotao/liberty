@@ -56,7 +56,7 @@
   })
 ```
 
-### ready(urls: string[], entry?: string)
+### ready(urls: string[], entry?: string) : Promise<string | void>
 由于 require 方法需要同步请求资源，这个库内部使用同步的 xhr 去获取资源，但是同步 xhr 会很影响用户体验，而且同步的 xhr 已经从标准中移除了，所以我们需要一种办法来等待资源加载完成后再执行代码。这个方法只能在 init 方法调用之后 start 方法调用之前使用。当所有的静态资源请求后，再执行代码，就不会因为网络请求的时长而阻塞代码的执行
 
 ```js
