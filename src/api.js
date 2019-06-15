@@ -6,7 +6,7 @@ import { syncRequest, asyncRequest } from './request'
 import cacheModule, { resourceCache, responseURLModules } from './cache'
 
 // inspect path
-const PROTOCOL = /\w+:\/\/?/g
+const PROTOCOL = /\w+:\/\/?/
 let isStart = false
 
 export function init (opts = {}) {

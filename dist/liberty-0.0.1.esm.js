@@ -1,5 +1,3 @@
-'use strict';
-
 function assertPath(path) {
   if (typeof path !== 'string') {
     throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
@@ -330,7 +328,7 @@ function syncRequest (url, envPath) {
   return dealWithResponse(url, xhr, envPath)
 }
 
-const PROTOCOL = /\w+:\/\/?/g;
+const PROTOCOL = /\w+:\/\/?/;
 let isStart = false;
 function init (opts = {}) {
   if (this.config && this.config.init) {
@@ -541,4 +539,4 @@ var index = {
   }
 };
 
-module.exports = index;
+export default index;
