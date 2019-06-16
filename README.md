@@ -3,12 +3,12 @@
 
 ## CDN
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.2.min.js"></script>
 ```
 
 ## [Demo](./index.html)
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.2.min.js"></script>
   <script>
     Liberty.init()('/entry.js')
   </script>
@@ -27,13 +27,32 @@
 
 ```js
   const start = Liberty.init({
-    sourcemap: false, // 是否生成 sourcemap，用于定位控制台中源码信息，默认为 ture
-    defaultExname: '.json', // 默认补充的文件后缀名，默认为 '.js'
+    sourcemap: false, 
+    defaultExname: '.json',
   })
 
   // start 函数用于指定启动文件，只能是绝对路径
   // 所以你可以在一个合适的时机来调用这个函数，比如所有的静态资源加载完成，或者页面某些节点渲染完成后
   start('/dev/entry.js')
+```
+
+初始化的 options
+- `sourcemap` - 是否生成 sourcemap，用于定位控制台中源码信息, 只能定位到行，默认为 ture
+- `defaultExname` - 默认补充的文件后缀名，默认为 '.js'
+- `alias` - 路径别名，简化 require 的时候路径的填写，以 `@` 开头的路径会被认为是使用了别名
+
+alias demo
+```js
+  Liberty.init({
+    alias: {
+      @: '/dev',
+      common: '/dev/common'
+    }
+  })
+
+  // other js
+  require('@@/a.js') // 会被转化为 '/dev/@/a.js'
+  require('@common/index.js')  // 会被转化为 '/dev/common/index.js'
 ```
 
 ### addPlugin(exname: string, callback: Function) : void
@@ -121,5 +140,5 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 ```
 
 <h2>
-  <a download=Liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty.min.js>Download</a>
+  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.2.min.js>Download</a>
 <h2>

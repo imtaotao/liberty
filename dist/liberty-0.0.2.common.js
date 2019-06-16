@@ -1,3 +1,5 @@
+'use strict';
+
 function assertPath(path) {
   if (typeof path !== 'string') {
     throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
@@ -178,29 +180,10 @@ function sourcemap (resource, responseURL) {
 }
 
 var config = {
+  alias: {},
   init: false,
   sourcemap: true,
   defaultExname: '.js',
-};
-
-const readOnly = (obj, key, value) => {
-  Object.defineProperty(obj, key, {
-    value: value,
-    writable: false,
-  });
-};
-const readOnlyMap = obj => {
-  const newObj = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      readOnly(newObj, key, obj[key]);
-    }
-  }
-  return newObj
-};
-const getLegalName = name => {
-  if (!window[name]) return name
-  return getLegalName(name + '1')
 };
 
 class Plugins {
@@ -329,6 +312,55 @@ function syncRequest (url, envPath) {
 }
 
 const PROTOCOL = /\w+:\/\/?/;
+const readOnly = (obj, key, value) => {
+  Object.defineProperty(obj, key, {
+    value: value,
+    writable: false,
+  });
+};
+const readOnlyMap = obj => {
+  const newObj = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const val = obj[key];
+      val && typeof val === 'object'
+        ? readOnly(newObj, key, readOnlyMap(val))
+        : readOnly(newObj, key, val);
+    }
+  }
+  return newObj
+};
+const getLegalName = name => {
+  if (!window[name]) return name
+  return getLegalName(name + '1')
+};
+const PREFIX_RE = /(@[^\/]+)(\/.+)*/;
+const applyAlias = (path, alias, envPath) => {
+  return path.replace(PREFIX_RE, ($1, $2, $3) => {
+    const prefix = $2.slice(1, $2.length);
+    if (typeof alias[prefix] !== 'string') {
+      throw Error(`Alias [${prefix}] does not exist.\n\n ---> from ${envPath} \n` )
+    }
+    return posix.join(alias[prefix], $3)
+  })
+};
+const realPath = (path, {envPath, envDir}, config) => {
+  const alias = config.alias;
+  if (alias && path[0] === '@') {
+    path = applyAlias(path, alias, envPath);
+  }
+  if (path === '.' || path === './') path = envPath;
+  let exname = posix.extname(path);
+  if (!exname) {
+    path += config.defaultExname;
+    exname = config.defaultExname;
+  }
+  if (!posix.isAbsolute(path) && !PROTOCOL.test(path)) {
+    path = posix.join(envDir, path);
+  }
+  return { path, exname }
+};
+
 let isStart = false;
 function init (opts = {}) {
   if (this.config && this.config.init) {
@@ -404,7 +436,7 @@ function importModule (path, parentInfo, config, isAsync) {
   if (!path || typeof path !== 'string') {
     throw TypeError(`Require path [${path}] must be a string. \n\n ---> from [${envPath}]\n`)
   }
-  const pathOpts = getRealPath(path, parentInfo, config);
+  const pathOpts = realPath(path, parentInfo, config);
   if (cacheModule.has(pathOpts.path)) {
     const Module = cacheModule.get(pathOpts.path);
     const result = getModuleResult(Module);
@@ -415,20 +447,6 @@ function importModule (path, parentInfo, config, isAsync) {
   return isAsync
     ? getModuleForAsync(pathOpts, config, envPath)
     : getModuleForSync(pathOpts, config, envPath)
-}
-function getRealPath (path, parentInfo, config) {
-  if (path === '.' || path === './') {
-    path = parentInfo.envPath;
-  }
-  let exname = posix.extname(path);
-  if (!exname) {
-    path += config.defaultExname;
-    exname = config.defaultExname;
-  }
-  if (!posix.isAbsolute(path) && !PROTOCOL.test(path)) {
-    path = posix.join(parentInfo.envDir, path);
-  }
-  return { path, exname }
 }
 async function getModuleForAsync ({path, exname}, config, envPath) {
   const staticFile = resourceCache.has(path)
@@ -539,4 +557,4 @@ var index = {
   }
 };
 
-export default index;
+module.exports = index;

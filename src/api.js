@@ -1,12 +1,10 @@
 import Path from './path'
 import config from './config'
-import { readOnly, readOnlyMap } from './utils'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
+import { PROTOCOL, realPath, readOnly, readOnlyMap } from './utils'
 import cacheModule, { resourceCache, responseURLModules } from './cache'
 
-// inspect path
-const PROTOCOL = /\w+:\/\/?/
 let isStart = false
 
 export function init (opts = {}) {
@@ -95,7 +93,7 @@ export function importModule (path, parentInfo, config, isAsync) {
     throw TypeError(`Require path [${path}] must be a string. \n\n ---> from [${envPath}]\n`)
   }
 
-  const pathOpts = getRealPath(path, parentInfo, config)
+  const pathOpts = realPath(path, parentInfo, config)
   // if aleady cache, return cache result
   if (cacheModule.has(pathOpts.path)) {
     const Module = cacheModule.get(pathOpts.path)
@@ -107,23 +105,6 @@ export function importModule (path, parentInfo, config, isAsync) {
   return isAsync
     ? getModuleForAsync(pathOpts, config, envPath)
     : getModuleForSync(pathOpts, config, envPath)
-}
-
-// jugement the path and make a deal
-function getRealPath (path, parentInfo, config) {
-  if (path === '.' || path === './') {
-    path = parentInfo.envPath
-  }
-
-  let exname = Path.extname(path)
-  if (!exname) {
-    path += config.defaultExname
-    exname = config.defaultExname
-  }
-  if (!Path.isAbsolute(path) && !PROTOCOL.test(path)) {
-    path = Path.join(parentInfo.envDir, path)
-  }
-  return { path, exname }
 }
 
 // get Module
