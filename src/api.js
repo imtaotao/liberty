@@ -1,6 +1,6 @@
 import Path from './path'
 import config from './config'
-import readyResource from './resource-ready'
+import readyResource from './ready-resource'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
 import { PROTOCOL, realPath, readOnly, readOnlyMap } from './utils'
@@ -12,7 +12,9 @@ export function init (opts = {}) {
   if (this.config && this.config.init) {
     throw new Error('Can\'t repeat init.')
   }
+
   opts.init = true
+
   // set config attribute
   readOnly(this, 'config',
     readOnlyMap(Object.assign(config, opts))
@@ -28,6 +30,7 @@ export function init (opts = {}) {
       envDir: '/',
       envPath: entrance,
     }
+  
     const start = () => {
       if (isStart) throw Error('Can\'t repeat start.')
       isStart = true
@@ -57,6 +60,7 @@ export function addPlugin (exname, fn) {
   } else {
     if (typeof exname === 'string') {
       const types = exname.split(' ')
+
       if (types.length) {
         if (types.length === 1) {
           Plugins.add(types[0], fn)
@@ -73,14 +77,17 @@ export function addPlugin (exname, fn) {
 // load module static resource
 export async function ready (paths = [], entrance) {
   const config = this.config
+
   if (!config || !config.init) {
     throw Error('This method must be called after initialization.')
   }
   if (isStart) {
     throw Error('Static resources must be loaded before the module is loaded.')
   }
+
   await Promise.all(paths.map(p => {
     const isProtocolUrl = PROTOCOL.test(p)
+
     if (!isProtocolUrl) p = Path.normalize(p)
     if (!Path.isAbsolute(p) && !isProtocolUrl) {
       throw Error(`The path [${p}] must be an absolute path.\n\n ---> from [ready method]\n`)
@@ -103,6 +110,7 @@ export function importAll (paths, parentInfo, config) {
       ? Promise.resolve([])
       : Promise.all(paths.map(path => importModule(path, parentInfo, config, true)))
   }
+
   throw Error(`Paths [${paths}] must be an array.\n\n ---> from [${parentInfo.envPath}]\n`)
 }
 
@@ -114,14 +122,17 @@ export function importModule (path, parentInfo, config, isAsync) {
   }
 
   const pathOpts = realPath(path, parentInfo, config)
+
   // if aleady cache, return cache result
   if (cacheModule.has(pathOpts.path)) {
     const Module = cacheModule.get(pathOpts.path)
     const result = getModuleResult(Module)
+
     return !isAsync
       ? result
       : Promise.resolve(result)
   }
+
   return isAsync
     ? getModuleForAsync(pathOpts, config, envPath)
     : getModuleForSync(pathOpts, config, envPath)

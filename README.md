@@ -3,12 +3,12 @@
 
 ## CDN
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
 ```
 
 ## [Demo](./index.html)
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
   <script>
     Liberty.init()('/entry.js')
   </script>
@@ -176,5 +176,5 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 ```
 
 <h2>
-  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.3.min.js>Download</a>
+  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.1.min.js>Download</a>
 <h2>

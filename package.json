@@ -1,11 +1,11 @@
 {
   "name": "liberty",
-  "version": "0.0.3",
+  "version": "0.0.1",
   "description": "一个自用的模块加载器",
   "main": "index.js",
   "scripts": {
-    "server": "http-server ./ -o",
-    "dev": "node build.js -w",
+    "dev": "http-server ./ -o",
+    "build": "node build.js -w",
     "test": "node ./commonjs/a.js"
   },
   "author": "imtaotao",

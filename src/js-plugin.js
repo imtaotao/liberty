@@ -12,6 +12,7 @@ function run (scriptCode, rigisterObject, windowModuleName) {
   window[windowModuleName] = rigisterObject
   document.body.append(node)
   document.body.removeChild(node)
+
   delete window[windowModuleName]
 }
 
@@ -19,12 +20,14 @@ function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} }
   // get current module pathname
   const parentInfo = getParentConfig(path, responseURL)
+
   readOnly(Module, '__rustleModule', true)
 
   // require methods
   const require = path => importModule(path, parentInfo, config, false)
   require.async = path => importModule(path, parentInfo, config, true)
   require.all = paths => importAll(paths, parentInfo, config)
+
   return {
     Module,
     require,
@@ -35,6 +38,7 @@ function getRegisterParams (config, path, responseURL) {
 // create a object, rigister to window
 function generateObject (config, path, responseURL) {
   const { dirname, Module, require } = getRegisterParams(config, path, responseURL)
+
   return {
     require,
     module: Module,
@@ -58,6 +62,7 @@ function generateScriptCode (basecode, path, responseURL, parmas, config) {
    if (config.sourcemap) {
     scriptCode += `\n${sourcemap(scriptCode, responseURL)}`
   }
+
   return { moduleName, scriptCode }
 }
 
@@ -74,6 +79,7 @@ function runInThisContext (code, path, responseURL, config) {
   run(scriptCode, rigisterObject, moduleName)
   // clear cache, because run script throw error
   cacheModule.clear(path)
+
   return Module
 }
 

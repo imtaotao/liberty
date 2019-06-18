@@ -52,7 +52,6 @@ build(esm)
 build(cjs)
 build(umd)
 
-
 // watch, use in dev and test
 rollup.watch({
   ...umd,

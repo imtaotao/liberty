@@ -2,7 +2,7 @@ import { resourceCache } from './cache'
 import { asyncRequest } from './request'
 import { realPath, getParentConfig } from './utils'
 
-function getPaths (codeStr, set, processPath) {
+function getFilePaths (codeStr, set, processPath) {
   let res
   const paths = []
   /**
@@ -22,10 +22,10 @@ function getPaths (codeStr, set, processPath) {
    * 3. o.require('url') x
    * 4. o['require']('url') x
    * 5. require(a + 'url') x
+   * 6. require('url\'xx.js') x
    *  */
 
-  const REG = /[^\w\.](require[\n\s]*)\(\s*\n*['"](.+)['"]\n*\s*\);*/g
-
+  const REG = /[^\w\.](require[\n\s]*)\(\s*\n*['"]([^'"]+)['"]\n*\s*\);*/g
   while (res = REG.exec(codeStr)) {
     if (res[2]) {
       const path = processPath(res[2]).path
@@ -38,7 +38,7 @@ function getPaths (codeStr, set, processPath) {
   return paths
 }
 
-function getResources (envPath, paths) {
+function getFileResult (envPath, paths) {
   return Promise.all(paths.map(async path => {
     // avoid repeat request
     if (resourceCache.has(path)) return
@@ -51,15 +51,14 @@ function getResources (envPath, paths) {
 async function deepTraversal (paths, envPath, config, set = new Set()) {
   // add to set
   paths.forEach(v => set.add(v))
-  const files = await getResources(envPath, paths)
+  const files = await getFileResult(envPath, paths)
   const children = files.map(({path, content}) => {
-    const { responseURL, resource } = content
-    const parentConfig = getParentConfig(path, responseURL)
+    const parentConfig = getParentConfig(path, content.responseURL)
 
     // cache resource
     resourceCache.cache(path, content)
     // get next file
-    const paths = getPaths(resource, set,
+    const paths = getFilePaths(content.resource, set,
       childPath => realPath(childPath, parentConfig, config))
 
     // deep traversal get all child path

@@ -35,7 +35,7 @@ const applyAlias = (path, alias, envPath) => {
     if (typeof alias[prefix] !== 'string') {
       throw Error(`Alias [${prefix}] does not exist.\n\n ---> from ${envPath} \n` )
     }
-    return Path.join(alias[prefix], $3)
+    return Path.join(alias[prefix], $3 || '')
   })
 }
 
