@@ -1,24 +1,24 @@
 <template>
-  <div styleName='list-box'>
-    <ul styleName='outside-ul'>
-      <li v-for="(val, i) of userList" styleName='single-user'>
+  <div className='list-box'>
+    <ul className='outside-ul'>
+      <li v-for="(val, i) of userList" className='single-user'>
       <p>
         <span>{{ val.name }}</span>
-        <span styleName='operat-title' @click="this.deleteUser.bind(this, i)">删除</span>
-        <span styleName='operat-title' @click="this.showChangeUS.bind(this, val, i)">修改</span>
-        <span styleName='operat-title' @click="this.changeShow.bind(this, i)">详情</span>
+        <span className='operat-title' @click="this.deleteUser.bind(this, i)">删除</span>
+        <span className='operat-title' @click="this.showChangeUS.bind(this, val, i)">修改</span>
+        <span className='operat-title' @click="this.changeShow.bind(this, i)">详情</span>
       </p>
 
-        <div styleName='user-detail' className="animate"
+        <div className='user-detail' className="animate"
           :style="this.getUserDetailStyle(val)">
-          <ul styleName='detail-box'>
-            <li styleName='title-colu'>
+          <ul className='detail-box'>
+            <li className='title-colu'>
               <span v-for="val of title">{{ val }}</span>
             </li>
             <li>
               <span v-for="(val, key) of val" v-if="key !== 'show'">
-                <img v-if="key === 'pic'" styleName='user-pic' :src="val"/>
-                <span v-if="key !== 'pic'">{{ val }}</span>
+                <img v-if="key === 'pic'" className='user-pic' :src="val"/>
+                <b v-if="key !== 'pic'">{{ val }}</b>
               </span>
             </li>
           </ul>
@@ -29,14 +29,11 @@
 </template>
 
 <script>
-  import AddUser from '../add-user'
-  import ChangeUserComponent from '../change-user-infor'
-  import style from './style.css'
-  import * as _ from '../util'
+  const _ = require('@util')
+  const Grass = require('@grass')
+  const AddUser = require('../add-user/index')
 
-  @Grass.event
-  @Grass.CSSModules(style)
-  export default class List extends Grass.Component {
+  class List extends Grass.Component {
     // #temp
     constructor(props) {
       super(props)
@@ -52,6 +49,8 @@
     }
 
     beforeCreate () {
+      const ChangeUserComponent = require('../change-user-infor/index')
+
       AddUser.on(data => {
         this.addUser(data)
       })
@@ -123,4 +122,6 @@
         }
     }
   }
+
+  module.exports = Grass.event(List)
 </script>

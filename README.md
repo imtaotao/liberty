@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
 ```
 
-## [Demo](./index.html)
+## [Demo](./demo)
 ```html
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
   <script>

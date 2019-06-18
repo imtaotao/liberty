@@ -1,6 +1,6 @@
 <template>
-   <div styleName='list-container'>
-    <span @click="this.showModel.bind(this)" styleName='add-user'>
+   <div className='list-container'>
+    <span @click="this.showModel.bind(this)" className='add-user'>
       新增用户
     </span>
     <List />
@@ -12,13 +12,12 @@
 </template>
 
 <script>
-  import style from './style'
-  import List from '../list'
-  import AddUser from '../add-user'
-  import ChangeUserComponent from '../change-user-infor'
-
-  @Grass.CSSModules(style)
-  export default class UserList extends Grass.Component {
+  const Grass = require('@grass')
+  const List = require('../list/index')
+  const AddUser = require('../add-user/index')
+  const ChangeUserComponent = require('../change-user-infor/index')
+  
+  module.exports = class UserList extends Grass.Component {
     // #temp
     constructor(props) {
       super(props)

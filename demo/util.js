@@ -1,4 +1,4 @@
-export function notice (msg, time) {
+exports.notice = function (msg, time) {
   if (isNaN(time)) {
     time = 1500
   }
@@ -16,10 +16,10 @@ export function notice (msg, time) {
   }, time)
 }
 
-export function deepClone (data) {
+exports.deepClone = function (data) {
   return JSON.parse(JSON.stringify(data))
 }
 
-export function changeUserInfor (data) {
-  localStorage.setItem('User', JSON.stringify(deepClone(data)))
+exports.changeUserInfor = function (data) {
+  localStorage.setItem('User', JSON.stringify(exports.deepClone(data)))
 }

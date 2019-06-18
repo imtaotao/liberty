@@ -1,7 +1,7 @@
 <template>
-  <div styleName='change-user-container' @click="this.hide(true)">
-    <div styleName='change-user-box'>
-      <div styleName='change-user-detail'>
+  <div className='change-user-container' @click="this.hide(true)">
+    <div className='change-user-box'>
+      <div className='change-user-detail'>
         <p>
           <span>姓名：</span>
           <input type='text' :value="infor.name" placeholder='请填写姓名' @change="this.change('name')"/>
@@ -15,7 +15,7 @@
           <span>年龄：</span>
           <input type='text' :value="infor.age" placeholder='请填写您的年龄' @change="this.change('age')"/>
         </p>
-        <p styleName='input-radio'>
+        <p className='input-radio'>
           <span>性别：</span>
           <label>
             男：
@@ -28,7 +28,7 @@
           </label>
         </p>
       </div>
-      <div styleName='change-user-btn'>
+      <div className='change-user-btn'>
         <span @click="this.confirmBtn.bind(this)">确认</span>
         <span @click="this.next.bind(null, false)">取消</span>
       </div>
@@ -37,13 +37,11 @@
 </template>
 
 <script>
-  import * as _ from '../util'
-  import List from '../list'
-  import style from './style'
+  const _ = require('@util')
+  const Grass = require('@grass')
+  const List = require('../list/index')
 
-  @Grass.event
-  @Grass.CSSModules(style)
-  export default class ChangeUserComponent extends Grass.Component {
+  class ChangeUserComponent extends Grass.Component {
     // #temp
     constructor(props) {
       super(props)
@@ -130,4 +128,6 @@
       return name === this.state.infor.sex
     }
   }
+
+  module.exports = Grass.event(ChangeUserComponent)
 </script>

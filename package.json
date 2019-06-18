@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "http-server ./ -o",
     "build": "node build.js -w",
-    "test": "node ./commonjs/a.js"
+    "test": "node ./commonjs/a.js",
+    "demo": "http-server ./demo -o"
   },
   "author": "imtaotao",
   "license": "ISC",

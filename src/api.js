@@ -157,7 +157,7 @@ function getModuleForSync ({path, exname}, config, envPath) {
 }
 
 function getModuleResult (Module) {
-  return typeof Module === 'object' && Module.__rustleModule
+  return Module && typeof Module === 'object' && Module.__rustleModule
     ? Module.exports
     : Module
 }
