@@ -23,7 +23,7 @@
 
 ## API
 ### init(options?: Object) : Function
-这个方法会初始化整个模块加载器，只有在初始化后才能正常工作，返回一个 start 函数，用于启动模块加载。返回的 start 函数有个参数，入口文件的**绝对路径**，此处只能填写绝对路径
+这个方法会初始化整个模块加载器，只有在初始化后才能正常工作，返回一个 start 函数，用于启动模块加载。返回的 start 函数有个参数，入口文件的**绝对路径**，此处只能填写**绝对路径**
 
 ```js
   const start = Liberty.init({
@@ -41,17 +41,40 @@
 - `sourcemap` - 是否生成 sourcemap，用于定位控制台中源码信息, 只能定位到行，默认为 `ture`
 - `alias` - 路径别名，简化 require 的时候路径的填写，以 `@` 开头的路径会被认为是使用了别名
 - `hoos` - 设置钩子函数
-  + `ready` - 当预备资源加载完成后，会触发此钩子，会传入两个参数，`set` 和 `start` 函数，你可以检测 set 集合中有哪些模块的静态资源没有被加载完成，可以通过 `Liberty.ready` 方法手动添加静态资源，然后再调用 start 函数启动整个应用。这样可以让运行时的模块加载手动添加。
+  + `ready` - 当预备资源加载完成后，会触发此钩子，会传入两个参数，`set` 和 `start` 函数，你可以检测 set 集合中有哪些模块的静态资源没有被加载完成，可以通过 `Liberty.ready` 方法手动添加静态资源，然后再调用 start 函数启动整个应用。这样可以让运行时的模块通过手动的添加。
 ```js
   // 运行时的 require 不会被静态资源解析检测到，那这些模块你就可以在 hooks.ready 钩子中手动加载静态资源
   const urls = ['/a.js', '/b.js']
   urls.forEach(u => require('/dev' + v))
 
 
-  // 而下面这中是可以被检测到的
+  // 而下面这种是可以被检测到的
   require('/dev/a.js')
   require('/dev/b.js')
 ``` 
+
+ready 钩子的使用
+```html
+<script>
+  const start = Liberty.init({
+    hooks: {
+      ready (set, start) {
+        // 假如我们需要检测 /dev/a.js，但是在代码中 a.js 是通过运行时的模式加载的，例如
+        // 这样静态解析就会过滤掉此模块，导致最终以同步 xhr 的方式加载，所以我们可以在 ready 钩子中手动指定
+        // const a = 'a.js'
+        // require('/dev' + a)
+
+        if (!set.has('/dev/a.js')) {
+          Liberty.ready(['/dev/a.js']).then(start)
+        } else {
+          start()
+        }
+      }
+    }
+  })
+  start('/dev/index')
+</script>
+```
 - `readyResoruce` - 是否启动静态解析模块文件，这将会导致一个深度遍历检测所有的模块依赖，等所有资源加载完毕后才会执行整个应用的代码，默认为 `true`
 
 alias demo
