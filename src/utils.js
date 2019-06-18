@@ -56,8 +56,8 @@ export const realPath = (path, {envPath, envDir}, config) => {
 
   let exname = Path.extname(path)
   if (!exname) {
-    path += config.defaultExname
-    exname = config.defaultExname
+    path += config.exname
+    exname = config.exname
   }
   if (!Path.isAbsolute(path) && !PROTOCOL.test(path)) {
     path = Path.join(envDir, path)

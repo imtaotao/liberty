@@ -183,9 +183,9 @@ var config = {
   alias: {},
   hooks: {},
   init: false,
+  exname: '.js',
   sourcemap: true,
   readyResoruce: true,
-  defaultExname: '.js',
 };
 
 class Cache {
@@ -315,8 +315,8 @@ const realPath = (path, {envPath, envDir}, config) => {
   if (path === '.' || path === './') path = envPath;
   let exname = posix.extname(path);
   if (!exname) {
-    path += config.defaultExname;
-    exname = config.defaultExname;
+    path += config.exname;
+    exname = config.exname;
   }
   if (!posix.isAbsolute(path) && !PROTOCOL.test(path)) {
     path = posix.join(envDir, path);
@@ -338,16 +338,16 @@ function getPaths (codeStr, set, processPath) {
   }
   return paths
 }
-function getResources (paths) {
+function getResources (envPath, paths) {
   return Promise.all(paths.map(async path => {
     if (resourceCache.has(path)) return
-    const content = await asyncRequest(path, 'resource ready stage');
+    const content = await asyncRequest(path, envPath);
     return { path, content }
   }))
 }
-async function deepTraversal (paths, config, set = new Set()) {
+async function deepTraversal (paths, envPath, config, set = new Set()) {
   paths.forEach(v => set.add(v));
-  const array = (await getResources(paths))
+  const array = (await getResources(envPath, paths))
   .map(({path, content}) => {
     const { responseURL, resource } = content;
     const parentConfig = getParentConfig(path, responseURL);
@@ -355,16 +355,14 @@ async function deepTraversal (paths, config, set = new Set()) {
     const paths = getPaths(resource, set,
       childPath => realPath(childPath, parentConfig, config));
     return paths.length > 0
-      ? deepTraversal(paths, config, set)
+      ? deepTraversal(paths, parentConfig.envPath, config, set)
       : null
   });
   return Promise.all(array).then(() => set)
 }
 function readyResource (entrance, parentConfig, config) {
-  return new Promise((resolve, reject) => {
-    const paths = realPath(entrance, parentConfig, config);
-    deepTraversal([paths.path], config).then(resolve, reject);
-  })
+  const paths = realPath(entrance, parentConfig, config);
+  return deepTraversal([paths.path], parentConfig.envPath, config)
 }
 
 class Plugins {

@@ -3,12 +3,12 @@
 
 ## CDN
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.3.min.js"></script>
 ```
 
 ## [Demo](./index.html)
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.3.min.js"></script>
   <script>
     Liberty.init()('/entry.js')
   </script>
@@ -27,8 +27,8 @@
 
 ```js
   const start = Liberty.init({
+    exname: '.json',
     sourcemap: false, 
-    defaultExname: '.json',
   })
 
   // start 函数用于指定启动文件，只能是绝对路径
@@ -37,9 +37,22 @@
 ```
 
 初始化的 options
-- `sourcemap` - 是否生成 sourcemap，用于定位控制台中源码信息, 只能定位到行，默认为 ture
-- `defaultExname` - 默认补充的文件后缀名，默认为 '.js'
+- `exname` - 默认补充的文件后缀名，默认为 `.js`
+- `sourcemap` - 是否生成 sourcemap，用于定位控制台中源码信息, 只能定位到行，默认为 `ture`
 - `alias` - 路径别名，简化 require 的时候路径的填写，以 `@` 开头的路径会被认为是使用了别名
+- `hoos` - 设置钩子函数
+  + `ready` - 当预备资源加载完成后，会触发此钩子，会传入两个参数，`set` 和 `start` 函数，你可以检测 set 集合中有哪些模块的静态资源没有被加载完成，可以通过 `Liberty.ready` 方法手动添加静态资源，然后再调用 start 函数启动整个应用。这样可以让运行时的模块加载手动添加。
+```js
+  // 运行时的 require 不会被静态资源解析检测到，那这些模块你就可以在 hooks.ready 钩子中手动加载静态资源
+  const urls = ['/a.js', '/b.js']
+  urls.forEach(u => require('/dev' + v))
+
+
+  // 而下面这中是可以被检测到的
+  require('/dev/a.js')
+  require('/dev/b.js')
+``` 
+- `readyResoruce` - 是否启动静态解析模块文件，这将会导致一个深度遍历检测所有的模块依赖，等所有资源加载完毕后才会执行整个应用的代码，默认为 `true`
 
 alias demo
 ```js
@@ -110,8 +123,8 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 一个模块中有 5 个全局变量可用 `require, module, exports, __filename, __dirname`。所有的模块代码都只会被执行一次。对于循环引用，如果代码没有被执行到，则 require 到的可能为空。处理原则为，能获取到什么就是什么，参考 ejs
 
 - `require` - 用于加载模块，接受一个相对或绝对路径
-  + `async` - 用于异步加载模块，接受一个相对或绝对路径，返回一个 promise
-  + `all` - 用于异步加载多个模块，接受一个包含相对或绝对路径的 url 数组，返回一个 promise
+  + `async` - `require.async` 用于异步加载模块，接受一个相对或绝对路径，返回一个 promise
+  + `all` - `require.all` 用于异步加载多个模块，接受一个包含相对或绝对路径的 url 数组，返回一个 promise
 - `module` - 模块的根 object
 - `exports` - 暴露给其他模块的对象
 - `__filename` - 当前文件的文件路径
@@ -140,5 +153,5 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 ```
 
 <h2>
-  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.2.min.js>Download</a>
+  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.3.min.js>Download</a>
 <h2>
