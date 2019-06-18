@@ -1,3 +1,17 @@
+function genMappings (source) {
+  const lines = source.split('\n');
+  const code = l => `AA${l}A`;
+  return code('D') + ';' + lines.map(() => code('C')).join(';')
+}
+function sourcemap (resource, responseURL) {
+  const content = JSON.stringify({
+    version: 3,
+    sources: [responseURL],
+    mappings: genMappings(resource),
+  });
+  return `//@ sourceMappingURL=data:application/json;base64,${btoa(content)}`
+}
+
 function assertPath(path) {
   if (typeof path !== 'string') {
     throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
@@ -162,20 +176,6 @@ var posix = {
   win32: null,
   posix: null
 };
-
-function genMappings (source) {
-  const lines = source.split('\n');
-  const code = l => `AA${l}A`;
-  return code('D') + ';' + lines.map(() => code('C')).join(';')
-}
-function sourcemap (resource, responseURL) {
-  const content = JSON.stringify({
-    version: 3,
-    sources: [responseURL],
-    mappings: genMappings(resource),
-  });
-  return `//@ sourceMappingURL=data:application/json;base64,${btoa(content)}`
-}
 
 var config = {
   alias: {},
@@ -556,6 +556,7 @@ function runPlugins (type, opts) {
 function run (scriptCode, rigisterObject, windowModuleName) {
   const node = document.createElement('script');
   node.text = scriptCode;
+  node.style.display = 'none';
   window[windowModuleName] = rigisterObject;
   document.body.append(node);
   document.body.removeChild(node);

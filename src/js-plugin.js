@@ -1,4 +1,3 @@
-import Path from './path'
 import sourcemap from './sourcemap'
 import { importAll, importModule } from './api'
 import cacheModule, { responseURLModules } from './cache'
@@ -8,6 +7,7 @@ function run (scriptCode, rigisterObject, windowModuleName) {
   // run script
   const node = document.createElement('script')
   node.text = scriptCode
+  node.style.display = 'none'
 
   window[windowModuleName] = rigisterObject
   document.body.append(node)
