@@ -109,11 +109,11 @@ var posix = {
     for (var i = path.length - 1; i >= 1; --i) {
       code = path.charCodeAt(i);
       if (code === 47 ) {
-          if (!matchedSlash) {
-            end = i;
-            break;
-          }
-        } else {
+        if (!matchedSlash) {
+          end = i;
+          break;
+        }
+      } else {
         matchedSlash = false;
       }
     }
@@ -179,57 +179,12 @@ function sourcemap (resource, responseURL) {
 
 var config = {
   alias: {},
+  hooks: {},
   init: false,
   sourcemap: true,
+  readyResoruce: true,
   defaultExname: '.js',
 };
-
-class Plugins {
-  constructor (type) {
-    this.type = type;
-    this.plugins = new Set();
-  }
-  add (fn) {
-    this.plugins.add(fn);
-  }
-  forEach (params) {
-    let res = params;
-    for (const plugin of this.plugins.values()) {
-      res.resource = plugin(res);
-    }
-    return res
-  }
-}
-const map = {
-  allPlugins: new Map(),
-  add (type, fn) {
-    if (typeof type === 'string' && typeof fn === 'function') {
-      if (!this.allPlugins.has(type)) {
-        const pluginClass = new Plugins(type);
-        pluginClass.add(fn);
-        this.allPlugins.set(type, pluginClass);
-      } else {
-        this.allPlugins.get(type).add(fn);
-      }
-    } else {
-      throw TypeError('The "parameter" does not meet the requirements')
-    }
-  },
-  get (type = '*') {
-    return this.allPlugins.get(type)
-  },
-  run (type, params) {
-    const plugins = this.allPlugins.get(type);
-    if (plugins) {
-      return plugins.forEach(params)
-    }
-    return params
-  }
-};
-function addDefaultPlugins () {
-  map.add('*', opts => opts.resource);
-  map.add('.js', jsPlugin);
-}
 
 class Cache {
   constructor () {
@@ -267,6 +222,9 @@ function request (url, isAsync) {
         resource: null,
         haveCache: true,
       }
+    }
+    if (!isAsync) {
+      console.warn(`The module [${url}] is requested by synchronization, please avoid using this method.`);
     }
     return null
   };
@@ -342,6 +300,11 @@ const applyAlias = (path, alias, envPath) => {
     return posix.join(alias[prefix], $3)
   })
 };
+const getParentConfig = (envPath, responseURL) => {
+  const dirname = posix.dirname(responseURL);
+  const envDir = (new URL(dirname)).pathname;
+  return { envDir, envPath, dirname }
+};
 const realPath = (path, {envPath, envDir}, config) => {
   const alias = config.alias;
   if (alias && path[0] === '@') {
@@ -359,6 +322,96 @@ const realPath = (path, {envPath, envDir}, config) => {
   return { path, exname }
 };
 
+function getPaths (codeStr, set, processPath) {
+  let res;
+  const paths = [];
+  const REG = /[^\w\.](require[\n\s]*)\(\s*\n*['"](.+)['"]\n*\s*\);*/g;
+  while (res = REG.exec(codeStr)) {
+    if (res[2]) {
+      const path = processPath(res[2]).path;
+      if (!paths.includes(path) && !set.has(path)) {
+        paths.push(path);
+      }
+    }
+  }
+  return paths
+}
+function getResources (paths) {
+  return Promise.all(paths.map(async path => {
+    if (resourceCache.has(path)) return
+    const content = await asyncRequest(path, 'resource ready stage');
+    return { path, content }
+  }))
+}
+async function deepTraversal (paths, config, set = new Set()) {
+  paths.forEach(v => set.add(v));
+  const array = (await getResources(paths))
+  .map(({path, content}) => {
+    const { responseURL, resource } = content;
+    const parentConfig = getParentConfig(path, responseURL);
+    resourceCache.cache(path, content);
+    const paths = getPaths(resource, set,
+      childPath => realPath(childPath, parentConfig, config));
+    return paths.length > 0
+      ? deepTraversal(paths, config, set)
+      : null
+  });
+  return Promise.all(array).then(() => set)
+}
+function readyResource (entrance, parentConfig, config) {
+  return new Promise((resolve, reject) => {
+    const paths = realPath(entrance, parentConfig, config);
+    deepTraversal([paths.path], config).then(resolve, reject);
+  })
+}
+
+class Plugins {
+  constructor (type) {
+    this.type = type;
+    this.plugins = new Set();
+  }
+  add (fn) {
+    this.plugins.add(fn);
+  }
+  forEach (params) {
+    let res = params;
+    for (const plugin of this.plugins.values()) {
+      res.resource = plugin(res);
+    }
+    return res
+  }
+}
+const map = {
+  allPlugins: new Map(),
+  add (type, fn) {
+    if (typeof type === 'string' && typeof fn === 'function') {
+      if (!this.allPlugins.has(type)) {
+        const pluginClass = new Plugins(type);
+        pluginClass.add(fn);
+        this.allPlugins.set(type, pluginClass);
+      } else {
+        this.allPlugins.get(type).add(fn);
+      }
+    } else {
+      throw TypeError('The "parameter" does not meet the requirements')
+    }
+  },
+  get (type = '*') {
+    return this.allPlugins.get(type)
+  },
+  run (type, params) {
+    const plugins = this.allPlugins.get(type);
+    if (plugins) {
+      return plugins.forEach(params)
+    }
+    return params
+  }
+};
+function addDefaultPlugins () {
+  map.add('*', opts => opts.resource);
+  map.add('.js', jsPlugin);
+}
+
 let isStart = false;
 function init (opts = {}) {
   if (this.config && this.config.init) {
@@ -373,14 +426,27 @@ function init (opts = {}) {
     if (!entrance || (!posix.isAbsolute(entrance) && !PROTOCOL.test(entrance))) {
       throw Error('The startup path must be an absolute path.')
     }
-    isStart = true;
     const parentConfig = {
       envDir: '/',
       envPath: entrance,
     };
+    const start = () => {
+      if (isStart) throw Error('Can\'t repeat start.')
+      isStart = true;
+      importModule(entrance, parentConfig, this.config, true);
+    };
     readOnly(this.config, 'entrance', entrance);
     addDefaultPlugins();
-    importModule(entrance, parentConfig, this.config, true);
+    if (this.config.readyResoruce) {
+      readyResource(entrance, parentConfig, this.config)
+      .then(set => {
+        typeof this.config.hooks.ready === 'function'
+          ? this.config.hooks.ready(set, start)
+          : start();
+      });
+    } else {
+      start();
+    }
   }
 }
 function addPlugin (exname, fn) {
@@ -413,11 +479,13 @@ async function ready (paths = [], entrance) {
     const isProtocolUrl = PROTOCOL.test(p);
     if (!isProtocolUrl) p = posix.normalize(p);
     if (!posix.isAbsolute(p) && !isProtocolUrl) {
-      throw Error(`The path [${p}] must be an absolute path.`)
+      throw Error(`The path [${p}] must be an absolute path.\n\n ---> from [ready method]\n`)
     }
-    return asyncRequest(p, 'ready.method').then(resource => {
-      resourceCache.cache(p, resource);
-    })
+    return resourceCache.has(p)
+      ? null
+      : asyncRequest(p, 'ready method').then(resource => {
+          resourceCache.cache(p, resource);
+        })
   }));
   return entrance
 }
@@ -497,17 +565,16 @@ function run (scriptCode, rigisterObject, windowModuleName) {
 }
 function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} };
-  const dirname = posix.dirname(responseURL);
-  const envDir = (new URL(dirname)).pathname;
-  const parentInfo = {
-    envDir,
-    envPath: path,
-  };
+  const parentInfo = getParentConfig(path, responseURL);
   readOnly(Module, '__rustleModule', true);
   const require = path => importModule(path, parentInfo, config, false);
   require.async = path => importModule(path, parentInfo, config, true);
   require.all = paths => importAll(paths, parentInfo, config);
-  return { Module, require, dirname }
+  return {
+    Module,
+    require,
+    dirname: parentInfo.dirname,
+  }
 }
 function generateObject (config, path, responseURL) {
   const { dirname, Module, require } = getRegisterParams(config, path, responseURL);

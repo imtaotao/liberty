@@ -8,22 +8,28 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src='./dist/liberty-0.0.1.min.js'></script>
+  <script src='./dist/liberty-0.0.2.min.js'></script>
+  <!-- <script src="./dev/esm/a.js" type="module"></script> -->
   <!-- <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.2.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/grass-loader/src/liberty-plugin.js"></script>
   <script>
     // grs test
-    Liberty.addPlugin('.html', GrassPlugin)
-    Liberty.addPlugin('.html', Liberty.plugins.jsPlugin)
+    Liberty.addPlugin('.html .grs', GrassPlugin)
+    Liberty.addPlugin('.html .grs', Liberty.plugins.jsPlugin)
 
     const start = Liberty.init({
       alias: {
         comon: '/dev/grs-test/'
       },
-      defaultExname: '.html',
+      hooks: {
+        ready (set, start) {
+          start()
+        }
+      }
     })
 
-    Liberty.ready([], '/dev/grs-test/index').then(start)
+    // Liberty.ready([], '/dev/grs-test/test.js').then(start)
+    Liberty.ready([], '/dev/index').then(start)
   </script>
 </body>
 </html>

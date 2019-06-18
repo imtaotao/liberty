@@ -1,8 +1,8 @@
 import Path from './path'
 import sourcemap from './sourcemap'
 import { importAll, importModule } from './api'
-import { readOnly, getLegalName } from './utils'
 import cacheModule, { responseURLModules } from './cache'
+import { readOnly, getLegalName, getParentConfig } from './utils'
 
 function run (scriptCode, rigisterObject, windowModuleName) {
   // run script
@@ -18,19 +18,18 @@ function run (scriptCode, rigisterObject, windowModuleName) {
 function getRegisterParams (config, path, responseURL) {
   const Module = { exports: {} }
   // get current module pathname
-  const dirname = Path.dirname(responseURL)
-  const envDir = (new URL(dirname)).pathname
-  const parentInfo = {
-    envDir,
-    envPath: path,
-  }
+  const parentInfo = getParentConfig(path, responseURL)
   readOnly(Module, '__rustleModule', true)
 
   // require methods
   const require = path => importModule(path, parentInfo, config, false)
   require.async = path => importModule(path, parentInfo, config, true)
   require.all = paths => importAll(paths, parentInfo, config)
-  return { Module, require, dirname }
+  return {
+    Module,
+    require,
+    dirname: parentInfo.dirname,
+  }
 }
 
 // create a object, rigister to window

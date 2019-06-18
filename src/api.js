@@ -1,5 +1,6 @@
 import Path from './path'
 import config from './config'
+import readyResource from './resource-ready'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
 import { PROTOCOL, realPath, readOnly, readOnlyMap } from './utils'
@@ -23,14 +24,30 @@ export function init (opts = {}) {
       throw Error('The startup path must be an absolute path.')
     }
 
-    isStart = true
     const parentConfig = {
       envDir: '/',
       envPath: entrance,
     }
+    const start = () => {
+      if (isStart) throw Error('Can\'t repeat start.')
+      isStart = true
+      importModule(entrance, parentConfig, this.config, true)
+    }
+
     readOnly(this.config, 'entrance', entrance)
     addDefaultPlugins()
-    importModule(entrance, parentConfig, this.config, true)
+
+    // load file then run code
+    if (this.config.readyResoruce) {
+      readyResource(entrance, parentConfig, this.config)
+      .then(set => {
+        typeof this.config.hooks.ready === 'function'
+          ? this.config.hooks.ready(set, start) // call hooks function
+          : start()
+      })
+    } else {
+      start()
+    }
   }
 }
 
@@ -66,12 +83,15 @@ export async function ready (paths = [], entrance) {
     const isProtocolUrl = PROTOCOL.test(p)
     if (!isProtocolUrl) p = Path.normalize(p)
     if (!Path.isAbsolute(p) && !isProtocolUrl) {
-      throw Error(`The path [${p}] must be an absolute path.`)
+      throw Error(`The path [${p}] must be an absolute path.\n\n ---> from [ready method]\n`)
     }
-    return asyncRequest(p, 'ready.method').then(resource => {
-      // cache static resource
-      resourceCache.cache(p, resource)
-    })
+    
+    return resourceCache.has(p)
+      ? null
+      : asyncRequest(p, 'ready method').then(resource => {
+          // cache static resource
+          resourceCache.cache(p, resource)
+        })
   }))
   return entrance
 }

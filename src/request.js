@@ -12,6 +12,11 @@ function request (url, isAsync) {
         haveCache: true,
       }
     }
+
+    // If process sync request, need send warn
+    if (!isAsync) {
+      console.warn(`The module [${url}] is requested by synchronization, please avoid using this method.`)
+    }
     return null
   }
   const xhr = new XMLHttpRequest()

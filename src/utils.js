@@ -39,6 +39,12 @@ const applyAlias = (path, alias, envPath) => {
   })
 }
 
+export const getParentConfig = (envPath, responseURL) => {
+  const dirname = Path.dirname(responseURL)
+  const envDir = (new URL(dirname)).pathname
+  return { envDir, envPath, dirname }
+}
+
 // judge the path and make a deal
 export const realPath = (path, {envPath, envDir}, config) => {
   // apply alias name
