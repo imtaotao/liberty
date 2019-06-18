@@ -61,7 +61,7 @@ ready 钩子的使用
       ready (set, start) {
         // 假如我们需要检测 /dev/a.js，但是在代码中 a.js 是通过运行时的模式加载的，例如
         // 这样静态解析就会过滤掉此模块，导致最终以同步 xhr 的方式加载，所以我们可以在 ready 钩子中手动指定
-        // const a = 'a.js'
+        // const a = '/a.js'
         // require('/dev' + a)
 
         if (!set.has('/dev/a.js')) {

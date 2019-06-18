@@ -347,8 +347,8 @@ function getResources (envPath, paths) {
 }
 async function deepTraversal (paths, envPath, config, set = new Set()) {
   paths.forEach(v => set.add(v));
-  const array = (await getResources(envPath, paths))
-  .map(({path, content}) => {
+  const files = await getResources(envPath, paths);
+  const children = files.map(({path, content}) => {
     const { responseURL, resource } = content;
     const parentConfig = getParentConfig(path, responseURL);
     resourceCache.cache(path, content);
@@ -358,7 +358,7 @@ async function deepTraversal (paths, envPath, config, set = new Set()) {
       ? deepTraversal(paths, parentConfig.envPath, config, set)
       : null
   });
-  return Promise.all(array).then(() => set)
+  return Promise.all(children).then(() => set)
 }
 function readyResource (entrance, parentConfig, config) {
   const paths = realPath(entrance, parentConfig, config);
