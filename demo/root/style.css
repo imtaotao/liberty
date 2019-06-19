@@ -3,12 +3,13 @@
   height: 600px;
   border-radius: 5px;
   overflow-x:hidden;
-  margin-top: 100px;
   background: -webkit-gradient(linear,left top, right bottom, from(#485563), to(#29323c));
-  margin-left: calc(50% - 300px);
   color: #fff;
   box-shadow: 0 0 30px rgba(0,0,0,.5);
   font-size: 16px;
+  position: fixed;
+  top: calc(50% - 300px);
+  left: calc(50% - 300px);;
 }
 
 .add-user {

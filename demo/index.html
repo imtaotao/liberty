@@ -12,14 +12,14 @@
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/grass-loader/src/liberty-plugin.js"></script>
   <script>
-    Liberty.addPlugin('.grs', GrassPlugin)
-    Liberty.addPlugin('.grs', Liberty.plugins.jsPlugin)
+    Liberty.addPlugin('.html', GrassPlugin)
+    Liberty.addPlugin('.html', Liberty.plugins.jsPlugin)
     const start = Liberty.init({
+      exname: '.html',
       alias: {
         util: '/util.js',
         grass: 'https://raw.githubusercontent.com/imtaotao/Grass/master/dist/grass.common.js',
       },
-      exname: '.grs',
     })
     start('/index.js')
   </script>
