@@ -4,7 +4,7 @@
 + `get-repo-dir` 下载文件
 
 ## 步骤
-**下载文件存放路**径如果没有，默认为当前路径，但是 http-server 启动需要手动指定当前路径为 `./`
+**下载文件存放路径**如果没有，默认为当前路径，但是 http-server 启动需要手动指定当前路径为 `./`
 
 + step 1: run `npm i http-server get-repo-dir -g`
 + step 2: run `repo download https://github.com/imtaotao/liberty -d demo -l 下载文件存放路径`
