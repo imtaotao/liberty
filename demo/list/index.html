@@ -31,7 +31,6 @@
 <script>
   const _ = require('@util')
   const Grass = require('@grass')
-  const AddUser = require('../add-user/index')
 
   class List extends Grass.Component {
     // #temp
@@ -49,13 +48,11 @@
     }
 
     beforeCreate () {
-      const ChangeUserComponent = require('../change-user-infor/index')
-
-      AddUser.on(data => {
+      require('../add-user/index').on(data => {
         this.addUser(data)
       })
 
-      ChangeUserComponent.on(data => {
+      require('../change-user-infor/index').on(data => {
         if (typeof data !== 'boolean') {
           this.changeUserInfor(data)
         }

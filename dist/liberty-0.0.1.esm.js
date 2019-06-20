@@ -183,7 +183,7 @@ var config = {
   init: false,
   exname: '.js',
   sourcemap: true,
-  readyResoruce: true,
+  readyResource: true,
 };
 
 class Cache {
@@ -434,7 +434,7 @@ function init (opts = {}) {
     };
     readOnly(this.config, 'entrance', entrance);
     addDefaultPlugins();
-    if (this.config.readyResoruce) {
+    if (this.config.readyResource) {
       readyResource(entrance, parentConfig, this.config)
       .then(set => {
         typeof this.config.hooks.ready === 'function'
