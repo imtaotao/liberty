@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "http-server ./ -o",
     "build": "node build.js -w",
-    "test": "node ./commonjs/a.js",
-    "demo": "http-server ./demo -o"
+    "demo": "http-server ./demo -o",
+    "test": "karma start test/karma.unit.config.js",
+    "test:cover": "karma start test/karma.cover.config.js"
   },
   "author": "imtaotao",
   "license": "ISC",
@@ -15,6 +16,15 @@
     "rollup": "^1.13.0",
     "rollup-plugin-cleanup": "^3.1.1",
     "rollup-plugin-commonjs": "^10.0.0",
-    "rollup-plugin-node-resolve": "^5.0.1"
+    "rollup-plugin-node-resolve": "^5.0.1",
+    "jasmine-core": "^3.3.0",
+    "karma": "^3.1.1",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-coverage": "^1.1.2",
+    "karma-jasmine": "^1.1.2",
+    "karma-mocha-reporter": "^2.2.5",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^3.0.5",
+    "webpack": "^3.10.0"
   }
 }
