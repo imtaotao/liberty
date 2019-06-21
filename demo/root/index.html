@@ -13,9 +13,6 @@
 
 <script>
   const Grass = require('@grass')
-  const List = require('../list/index')
-  const AddUser = require('../add-user/index')
-  const ChangeUserComponent = require('../change-user-infor/index')
   
   module.exports = class UserList extends Grass.Component {
     // #temp
@@ -28,11 +25,11 @@
     }
 
     beforeCreate () {
-      ChangeUserComponent.on(data => {
+      this.getComponent('ChangeUserComponent').on(data => {
         this.setState({showChangeUS: data})
       })
 
-      List.on(isShow => {
+      this.getComponent('List').on(isShow => {
         if (typeof isShow === 'boolean') {
           this.setState({showChangeUS: isShow})
         }
@@ -49,9 +46,9 @@
 
     component () {
       return {
-        List,
-        AddUser,
-        ChangeUserComponent,
+        List: require('../list/index'),
+        AddUser: require('../add-user/index'),
+        ChangeUserComponent: require('../change-user-infor/index'),
       }
     }
   }

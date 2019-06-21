@@ -41,7 +41,7 @@ export function init (opts = {}) {
     addDefaultPlugins()
 
     // load file then run code
-    if (this.config.readyResoruce) {
+    if (this.config.readyResource) {
       readyResource(entrance, parentConfig, this.config)
       .then(set => {
         typeof this.config.hooks.ready === 'function'

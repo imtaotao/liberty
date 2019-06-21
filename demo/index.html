@@ -15,6 +15,7 @@
     Liberty.addPlugin('.html', GrassPlugin)
     Liberty.addPlugin('.html', Liberty.plugins.jsPlugin)
     const start = Liberty.init({
+      readyResource: false,
       exname: '.html',
       alias: {
         util: '/util.js',
