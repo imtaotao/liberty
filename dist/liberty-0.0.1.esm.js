@@ -605,6 +605,7 @@ function runInThisContext (code, path, responseURL, config) {
   responseURLModules.cache(responseURL, Module);
   run(scriptCode, rigisterObject, moduleName);
   cacheModule.clear(path);
+  responseURLModules.clear(responseURL);
   return Module
 }
 function jsPlugin ({resource, path, config, responseURL}) {

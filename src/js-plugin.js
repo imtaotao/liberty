@@ -79,6 +79,7 @@ function runInThisContext (code, path, responseURL, config) {
   run(scriptCode, rigisterObject, moduleName)
   // clear cache, because run script throw error
   cacheModule.clear(path)
+  responseURLModules.clear(responseURL)
 
   return Module
 }
