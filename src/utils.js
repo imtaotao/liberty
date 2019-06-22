@@ -30,12 +30,15 @@ export const getLegalName = name => {
 
 const PREFIX_RE = /(@[^\/]+)(\/.+)*/
 const applyAlias = (path, alias, envPath) => {
-  return path.replace(PREFIX_RE, ($1, $2, $3) => {
+  return path.replace(PREFIX_RE, ($1, $2, $3 = '') => {
     const prefix = $2.slice(1, $2.length)
-    if (typeof alias[prefix] !== 'string') {
+    const aliasStr = alias[prefix] 
+    if (typeof aliasStr !== 'string') {
       throw Error(`Alias [${prefix}] does not exist.\n\n ---> from ${envPath} \n` )
     }
-    return Path.join(alias[prefix], $3 || '')
+    return PROTOCOL.test(aliasStr)
+      ? aliasStr + $3
+      : Path.join(aliasStr, $3)
   })
 }
 
