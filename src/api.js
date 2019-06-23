@@ -27,10 +27,10 @@ export function init (opts = {}) {
     }
 
     const parentConfig = {
-      envDir: '/',
       envPath: entrance,
+      envDir: Path.dirname(entrance) || '/',
     }
-  
+
     const start = () => {
       if (isStart) throw Error('Can\'t repeat start.')
       isStart = true

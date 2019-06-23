@@ -428,8 +428,8 @@ function init (opts = {}) {
       throw Error('The startup path must be an absolute path.')
     }
     const parentConfig = {
-      envDir: '/',
       envPath: entrance,
+      envDir: posix.dirname(entrance) || '/',
     };
     const start = () => {
       if (isStart) throw Error('Can\'t repeat start.')
