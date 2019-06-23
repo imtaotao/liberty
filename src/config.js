@@ -4,5 +4,5 @@ export default {
   init: false,
   exname: '.js',
   sourcemap: true,
-  readyResource: true,
+  staticOptimize: true,
 }

@@ -185,7 +185,7 @@ var config = {
   init: false,
   exname: '.js',
   sourcemap: true,
-  readyResource: true,
+  staticOptimize: true,
 };
 
 class Cache {
@@ -330,7 +330,7 @@ const realPath = (path, {envPath, envDir}, config) => {
 function getFilePaths (codeStr, set, processPath) {
   let res;
   const paths = [];
-  codeStr = codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '');
+  codeStr = ' ' + codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '');
   const REG = /[^\w\.](require[\n\s]*)\(\s*\n*['"]([^'"]+)['"]\n*\s*\);*/g;
   while (res = REG.exec(codeStr)) {
     if (res[2]) {
@@ -363,7 +363,7 @@ async function deepTraversal (paths, envPath, config, set = new Set()) {
   });
   return Promise.all(children).then(() => set)
 }
-function readyResource (entrance, parentConfig, config) {
+function staticOptimize (entrance, parentConfig, config) {
   const paths = realPath(entrance, parentConfig, config);
   return deepTraversal([paths.path], parentConfig.envPath, config)
 }
@@ -440,8 +440,8 @@ function init (opts = {}) {
     };
     readOnly(this.config, 'entrance', entrance);
     addDefaultPlugins();
-    if (this.config.readyResource) {
-      readyResource(entrance, parentConfig, this.config)
+    if (this.config.staticOptimize) {
+      staticOptimize(entrance, parentConfig, this.config)
       .then(set => {
         typeof this.config.hooks.ready === 'function'
           ? this.config.hooks.ready(set, start)

@@ -5,8 +5,8 @@ import { realPath, getParentConfig } from './utils'
 function getFilePaths (codeStr, set, processPath) {
   let res
   const paths = []
-  // remove comment
-  codeStr = codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '')
+  // remove comment and fix match bug
+  codeStr = ' ' + codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '')
 
   /**
    * match

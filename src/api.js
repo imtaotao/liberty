@@ -1,6 +1,6 @@
 import Path from './path'
 import config from './config'
-import readyResource from './ready-resource'
+import staticOptimize from './static-optimize'
 import Plugins, { addDefaultPlugins } from './plugin'
 import { syncRequest, asyncRequest } from './request'
 import { PROTOCOL, realPath, readOnly, readOnlyMap } from './utils'
@@ -41,8 +41,8 @@ export function init (opts = {}) {
     addDefaultPlugins()
 
     // load file then run code
-    if (this.config.readyResource) {
-      readyResource(entrance, parentConfig, this.config)
+    if (this.config.staticOptimize) {
+      staticOptimize(entrance, parentConfig, this.config)
       .then(set => {
         typeof this.config.hooks.ready === 'function'
           ? this.config.hooks.ready(set, start) // call hooks function
