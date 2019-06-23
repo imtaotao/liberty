@@ -5,6 +5,9 @@ import { realPath, getParentConfig } from './utils'
 function getFilePaths (codeStr, set, processPath) {
   let res
   const paths = []
+  // remove comment
+  codeStr = codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '')
+
   /**
    * match
    * 1. requie('url')
@@ -15,7 +18,7 @@ function getFilePaths (codeStr, set, processPath) {
    * 6. require('url' )
    * 7. require 
    *   ('url')
-   * 
+   *
    * mismatch
    * 1. require(a + b) x
    * 2. require(`url`) x

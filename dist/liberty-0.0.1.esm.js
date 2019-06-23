@@ -328,6 +328,7 @@ const realPath = (path, {envPath, envDir}, config) => {
 function getFilePaths (codeStr, set, processPath) {
   let res;
   const paths = [];
+  codeStr = codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '');
   const REG = /[^\w\.](require[\n\s]*)\(\s*\n*['"]([^'"]+)['"]\n*\s*\);*/g;
   while (res = REG.exec(codeStr)) {
     if (res[2]) {
