@@ -24,8 +24,9 @@ export const readOnlyMap = obj => {
 }
 
 export const getLegalName = name => {
-  if (!window[name]) return name
-  return getLegalName(name + '1')
+  return name in window
+    ? getLegalName(name + '1')
+    : name
 }
 
 const PREFIX_RE = /(@[^\/]+)(\/.+)*/

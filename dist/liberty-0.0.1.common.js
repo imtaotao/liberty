@@ -214,7 +214,7 @@ var cacheModule = new Cache();
 const resourceCache = new Cache();
 const responseURLModules = new Cache();
 
-function request (url, isAsync) {
+function request (url, envPath, isAsync) {
   const getCache = xhr => {
     const responseURL = xhr.responseURL;
     if (responseURLModules.has(responseURL)) {
@@ -226,7 +226,7 @@ function request (url, isAsync) {
       }
     }
     if (!isAsync) {
-      console.warn(`The module [${url}] is requested by synchronization, please avoid using this method.`);
+      console.warn(`The module [${url}] is requested by synchronization, please avoid using this method\n\n --> from [${envPath}]\n`);
     }
     return null
   };
@@ -261,11 +261,11 @@ function dealWithResponse (url, xhr, envPath) {
   }
 }
 async function asyncRequest (url, envPath) {
-  const { target: xhr } = await request(url, true);
+  const { target: xhr } = await request(url, envPath, true);
   return dealWithResponse(url, xhr, envPath)
 }
 function syncRequest (url, envPath) {
-  const xhr = request(url, false);
+  const xhr = request(url, envPath, false);
   return dealWithResponse(url, xhr, envPath)
 }
 
@@ -289,8 +289,9 @@ const readOnlyMap = obj => {
   return newObj
 };
 const getLegalName = name => {
-  if (!window[name]) return name
-  return getLegalName(name + '1')
+  return name in window
+    ? getLegalName(name + '1')
+    : name
 };
 const PREFIX_RE = /(@[^\/]+)(\/.+)*/;
 const applyAlias = (path, alias, envPath) => {
@@ -330,7 +331,7 @@ const realPath = (path, {envPath, envDir}, config) => {
 function getFilePaths (codeStr, set, processPath) {
   let res;
   const paths = [];
-  codeStr = ' ' + codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '');
+  codeStr = ' ' + codeStr.replace(/[^:]\/\/.*|\/\*[\w\W]*?\*\//g, '');
   const REG = /[^\w\.](require[\n\s]*)\(\s*\n*['"]([^'"]+)['"]\n*\s*\);*/g;
   while (res = REG.exec(codeStr)) {
     if (res[2]) {

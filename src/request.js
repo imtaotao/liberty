@@ -1,6 +1,6 @@
 import { responseURLModules } from './cache'
 
-function request (url, isAsync) {
+function request (url, envPath, isAsync) {
   const getCache = xhr => {
     const responseURL = xhr.responseURL
     if (responseURLModules.has(responseURL)) {
@@ -15,7 +15,7 @@ function request (url, isAsync) {
 
     // If process sync request, need send warn
     if (!isAsync) {
-      console.warn(`The module [${url}] is requested by synchronization, please avoid using this method.`)
+      console.warn(`The module [${url}] is requested by synchronization, please avoid using this method\n\n --> from [${envPath}]\n`)
     }
     return null
   }
@@ -56,11 +56,11 @@ function dealWithResponse (url, xhr, envPath) {
 }
 
 export async function asyncRequest (url, envPath) {
-  const { target: xhr } = await request(url, true)
+  const { target: xhr } = await request(url, envPath, true)
   return dealWithResponse(url, xhr, envPath)
 }
 
 export function syncRequest (url, envPath) {
-  const xhr = request(url, false)
+  const xhr = request(url, envPath, false)
   return dealWithResponse(url, xhr, envPath)
 }

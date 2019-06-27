@@ -6,7 +6,7 @@ function getFilePaths (codeStr, set, processPath) {
   let res
   const paths = []
   // remove comment and fix match bug
-  codeStr = ' ' + codeStr.replace(/\/\/.*|\/\*[\w\W]*?\*\//g, '')
+  codeStr = ' ' + codeStr.replace(/[^:]\/\/.*|\/\*[\w\W]*?\*\//g, '')
 
   /**
    * match
