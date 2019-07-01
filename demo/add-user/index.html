@@ -1,6 +1,6 @@
 <template>
-  <div className='add-user-box' @click="this.hide.bind(this)">
-    <div className='add-user-form'>
+  <div styleName='add-user-box' @click="this.hide.bind(this)">
+    <div styleName='add-user-form'>
       <p>
         <span>姓名：</span>
         <input type='text' :value="name" placeholder='请填写姓名' @change="this.change('name')" />
@@ -13,7 +13,7 @@
         <span>年龄：</span>
         <input type='text' :value="age" placeholder='请填写您的年龄' @change="this.change('age')" />
       </p>
-      <p className='input-radio'>
+      <p styleName='input-radio'>
         <span>性别：</span>
         <label>
           男：
@@ -25,7 +25,7 @@
           <input value='女' type='radio' name='sex' @change="this.change('sex')" />
         </label>
       </p>
-      <div className='btn-box'>
+      <div styleName='btn-box'>
         <span @click="this.confirmBtn.bind(this)">确认</span>
         <span @click="this.props.hide">取消</span>
       </div>
@@ -35,7 +35,8 @@
 
 <script>
   const _ = require('@util')
-  const Grass = require('@grass')
+  const Grass = require('@Grass')
+  const style = require('./style.css')
 
   class AddUser extends Grass.Component {
     // #temp
@@ -109,5 +110,7 @@
     }
   }
 
-  module.exports = Grass.event(AddUser)
+  Grass.event(AddUser)
+  Grass.CSSModules(style)(AddUser)
+  module.exports = AddUser
 </script>

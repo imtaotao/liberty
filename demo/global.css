@@ -1,4 +1,4 @@
-.notice {
+:global(.notice) {
   height:80px;
   min-width:200px;
   background:rgba(0,0,0,.6);
@@ -15,7 +15,7 @@
   font-weight:bold;
 }
 
-.animate {
+:global(.animate) {
   transition: all .25s;
   -moz-transition: all .25s;
   -webkit-transition: all .25s;

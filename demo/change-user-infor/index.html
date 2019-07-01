@@ -1,7 +1,7 @@
 <template>
-  <div className='change-user-container' @click="this.hide(true)">
-    <div className='change-user-box'>
-      <div className='change-user-detail'>
+  <div styleName='change-user-container' @click="this.hide(true)">
+    <div styleName='change-user-box'>
+      <div styleName='change-user-detail'>
         <p>
           <span>姓名：</span>
           <input type='text' :value="infor.name" placeholder='请填写姓名' @change="this.change('name')"/>
@@ -15,7 +15,7 @@
           <span>年龄：</span>
           <input type='text' :value="infor.age" placeholder='请填写您的年龄' @change="this.change('age')"/>
         </p>
-        <p className='input-radio'>
+        <p styleName='input-radio'>
           <span>性别：</span>
           <label>
             男：
@@ -28,7 +28,7 @@
           </label>
         </p>
       </div>
-      <div className='change-user-btn'>
+      <div styleName='change-user-btn'>
         <span @click="this.confirmBtn.bind(this)">确认</span>
         <span @click="this.next.bind(null, false)">取消</span>
       </div>
@@ -37,9 +37,9 @@
 </template>
 
 <script>
-  const _ = require('@util')
-  const Grass = require('@grass')
-  const List = require('../list/index')
+  const  _ = require('@util')
+  const Grass = require('@Grass')
+  const style = require('./style.css')
 
   class ChangeUserComponent extends Grass.Component {
     // #temp
@@ -57,7 +57,7 @@
     }
 
     beforeCreate () {
-       List.on(data => {
+       require('../list/index').on(data => {
         if (typeof data === 'string') {
           return
         }
@@ -129,5 +129,7 @@
     }
   }
 
-  module.exports = Grass.event(ChangeUserComponent)
+  Grass.event(ChangeUserComponent)
+  Grass.CSSModules(style)(ChangeUserComponent)
+  module.exports = ChangeUserComponent
 </script>

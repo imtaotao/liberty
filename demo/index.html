@@ -9,16 +9,19 @@
 <body>
   <div id="root"></div>
   <!-- <script src="./liberty-0.0.1.min.js"></script> -->
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/css-module/index.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/grass-loader/src/liberty-plugin.js"></script>
   <script>
+    Liberty.addPlugin('.css', CssModule)
     Liberty.addPlugin('.html', GrassPlugin)
     Liberty.addPlugin('.html', Liberty.plugins.jsPlugin)
+
     const start = Liberty.init({
       exname: '.html',
       alias: {
         util: '/util.js',
-        grass: 'https://raw.githubusercontent.com/imtaotao/Grass/master/dist/grass.common.js',
+        Grass: 'https://raw.githubusercontent.com/imtaotao/Grass/master/dist/grass.common.js',
       },
     })
     start('/index.js')

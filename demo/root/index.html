@@ -1,6 +1,6 @@
 <template>
-   <div className='list-container'>
-    <span @click="this.showModel.bind(this)" className='add-user'>
+   <div styleName='list-container'>
+    <span @click="this.showModel.bind(this)" styleName='add-user'>
       新增用户
     </span>
     <List />
@@ -12,9 +12,13 @@
 </template>
 
 <script>
-  const Grass = require('@grass')
-  
-  module.exports = class UserList extends Grass.Component {
+  const Grass = require('@Grass')
+  const style = require('./style.css')
+  const List = require('../list/index')
+  const AddUser = require('../add-user/index')
+  const ChangeUserComponent = require('../change-user-infor/index')
+
+  class UserList extends Grass.Component {
     // #temp
     constructor(props) {
       super(props)
@@ -25,11 +29,11 @@
     }
 
     beforeCreate () {
-      this.getComponent('ChangeUserComponent').on(data => {
+      ChangeUserComponent.on(data => {
         this.setState({showChangeUS: data})
       })
 
-      this.getComponent('List').on(isShow => {
+      List.on(isShow => {
         if (typeof isShow === 'boolean') {
           this.setState({showChangeUS: isShow})
         }
@@ -46,11 +50,12 @@
 
     component () {
       return {
-        List: require('../list/index'),
-        AddUser: require('../add-user/index'),
-        ChangeUserComponent: require('../change-user-infor/index'),
+        List,
+        AddUser,
+        ChangeUserComponent,
       }
     }
   }
+  module.exports = Grass.CSSModules(style)(UserList)
 </script>
 

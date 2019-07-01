@@ -1,24 +1,24 @@
 <template>
-  <div className='list-box'>
-    <ul className='outside-ul'>
-      <li v-for="(val, i) of userList" className='single-user'>
+  <div styleName='list-box'>
+    <ul styleName='outside-ul'>
+      <li v-for="(val, i) of userList" styleName='single-user'>
       <p>
         <span>{{ val.name }}</span>
-        <span className='operat-title' @click="this.deleteUser.bind(this, i)">删除</span>
-        <span className='operat-title' @click="this.showChangeUS.bind(this, val, i)">修改</span>
-        <span className='operat-title' @click="this.changeShow.bind(this, i)">详情</span>
+        <span styleName='operat-title' @click="this.deleteUser.bind(this, i)">删除</span>
+        <span styleName='operat-title' @click="this.showChangeUS.bind(this, val, i)">修改</span>
+        <span styleName='operat-title' @click="this.changeShow.bind(this, i)">详情</span>
       </p>
 
-        <div className='user-detail' className="animate"
+        <div styleName='user-detail' className="animate"
           :style="this.getUserDetailStyle(val)">
-          <ul className='detail-box'>
-            <li className='title-colu'>
+          <ul styleName='detail-box'>
+            <li styleName='title-colu'>
               <span v-for="val of title">{{ val }}</span>
             </li>
             <li>
               <span v-for="(val, key) of val" v-if="key !== 'show'">
-                <img v-if="key === 'pic'" className='user-pic' :src="val"/>
-                <b v-if="key !== 'pic'">{{ val }}</b>
+                <img v-if="key === 'pic'" styleName='user-pic' :src="val"/>
+                <span v-if="key !== 'pic'">{{ val }}</span>
               </span>
             </li>
           </ul>
@@ -30,7 +30,10 @@
 
 <script>
   const _ = require('@util')
-  const Grass = require('@grass')
+  const Grass = require('@Grass')
+  const style = require('./style.css')
+  const AddUser = require('../add-user/index')
+  const ChangeUserComponent = require('../change-user-infor/index')
 
   class List extends Grass.Component {
     // #temp
@@ -38,21 +41,20 @@
       super(props)
 
       const userList = JSON.parse(localStorage.getItem('User')  || '[]')
-
       userList.forEach(val => val.show = false)
 
       this.state = {
-        title : ['姓名', '头像', '年龄', '性别'],
+        title : ['姓名', '头像', '性别', '年龄'],
         userList,
       }
     }
 
     beforeCreate () {
-      require('../add-user/index').on(data => {
+      AddUser.on(data => {
         this.addUser(data)
       })
 
-      require('../change-user-infor/index').on(data => {
+      ChangeUserComponent.on(data => {
         if (typeof data !== 'boolean') {
           this.changeUserInfor(data)
         }
@@ -120,5 +122,7 @@
     }
   }
 
-  module.exports = Grass.event(List)
+  Grass.event(List)
+  Grass.CSSModules(style)(List)
+  module.exports = List
 </script>
