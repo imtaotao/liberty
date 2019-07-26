@@ -1,8 +1,9 @@
 {
   "name": "@rustle/liberty",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Module loader running in the browser.",
-  "main": "index.js",
+  "main": "dist/liberty.common.js",
+  "module": "dist/liberty.esm.js",
   "scripts": {
     "dev": "http-server ./ -o",
     "build": "node build.js -w",
