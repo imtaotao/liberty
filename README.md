@@ -7,12 +7,12 @@
 
 ## CDN
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
 ```
 
 ## [Demo](./demo)
 ```html
-  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty-0.0.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
   <script>
     Liberty.init()('/entry.js')
   </script>
@@ -192,10 +192,6 @@ path 模块存放着一些 [nodeJs path](https://nodejs.org/api/path.html) 模�
   })
 ```
 
-<h2>
-  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.1.min.js>Download</a>
-<h2>
-
 
 ## 优化措施
 由于 liberty 在静态分析时会对所有的源码进行匹配，得到相应的依赖，这是一个耗时很长的过程，在纯浏览器端这是一个很不友好的操作（同步加载带来的代价），以下两点可以相应的优化这个缺点
@@ -203,3 +199,8 @@ path 模块存放着一些 [nodeJs path](https://nodejs.org/api/path.html) 模�
 1. 配合 `liberty.ready` 方法和 `ready hook` 来提前手动异步的加载资源，减少 liberty 静态分析的压力
 
 2. 现阶段的 mvvm 库都会有配套的**异步组件**，使用异步组件可以让首屏渲染时 liberty 静态分析压力减小，加快首屏渲染。这样就可以让静态分析分阶段，随着异步加载而进行。这样能够得到很好的体验优化
+
+
+<h2>
+  <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty.min.js>Download</a>
+<h2>

@@ -1,5 +1,5 @@
 ## 如何运行
-这个是一个 demo，下面几个步骤能够快速的运行起来这个 demo，但是需要两个全局包（如果你没有装过的话）
+这个是一个 [demo](https://imtaotao.github.io/css-module/)，下面几个步骤能够快速的运行起来这个 demo，但是需要两个全局包（如果你没有装过的话）
 + `http-server` 静态服务器
 + `get-repo-dir` 下载文件
 
