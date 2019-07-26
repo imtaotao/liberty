@@ -345,7 +345,7 @@ function getFilePaths (codeStr, set, processPath) {
 }
 function getFileResult (envPath, paths) {
   return Promise.all(paths.map(async path => {
-    if (!resourceCache.has(path)){
+    if (!cacheModule.has(path) && !resourceCache.has(path)){
       const content = await asyncRequest(path, envPath);
       if (!content.haveCache) {
         return { path, content }
@@ -546,7 +546,7 @@ function getModuleResult (Module) {
 }
 function genModule (path, exname, config, staticFile) {
   const Module = processResource(path, exname, config, staticFile);
-  resourceCache.cache(path, 1, true);
+  resourceCache.clear(path);
   return Module
 }
 function processResource (path, exname, config, {resource, responseURL}) {
