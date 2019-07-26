@@ -1,5 +1,9 @@
 ## 自用的 module 加载器
-学习和自用，没什么别的用途。因为是通过 xhr 去加载静态资源，所以必须有个服务器，而且不能跨域
+[![NPM version][npm-image]][npm-url]
+
+[npm-image]: https://img.shields.io/npm/v/@rustle/liberty.svg?style=flat-square
+[npm-url]: https://www.npmjs.com/package/@rustle/liberty
+学习和自用。因为是通过 xhr 去加载静态资源，所以必须有个服务器，而且不能跨域
 
 ## CDN
 ```html
@@ -20,6 +24,7 @@
     console.log(require('https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.common.dev.js'));
   }
 ```
+
 
 ## API
 ### init(options?: Object) : Function
@@ -145,6 +150,15 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
   Liberty.addPlugin('.vue', Liberty.plugins.jsPlugin)
 ```
 
+### path: Object
+path 模块存放着一些 [nodeJs path](https://nodejs.org/api/path.html) 模块的实现，但只有一部分
+  + `path.join`
+  + `path.dirname`
+  + `path.extname`
+  + `path.normalize`
+  + `path.isAbsolute`
+
+
 ## Module
 一个模块中有 5 个全局变量可用 `require, module, exports, __filename, __dirname`。所有的模块代码都只会被执行一次。对于循环引用，如果代码没有被执行到，则 require 到的可能为空。处理原则为，能获取到什么就是什么，参考 ejs
 
@@ -181,3 +195,11 @@ plugins 属性存放着默认的一些插件方法（暂时只有一个）
 <h2>
   <a download=liberty href=https://raw.githubusercontent.com/imtaotao/liberty/master/dist/liberty-0.0.1.min.js>Download</a>
 <h2>
+
+
+## 优化措施
+由于 liberty 在静态分析时会对所有的源码进行匹配，得到相应的依赖，这是一个耗时很长的过程，在纯浏览器端这是一个很不友好的操作（同步加载带来的代价），以下两点可以相应的优化这个缺点
+
+1. 配合 `liberty.ready` 方法和 `ready hook` 来提前手动异步的加载资源，减少 liberty 静态分析的压力
+
+2. 现阶段的 mvvm 库都会有配套的**异步组件**，使用异步组件可以让首屏渲染时 liberty 静态分析压力减小，加快首屏渲染。这样就可以让静态分析分阶段，随着异步加载而进行。这样能够得到很好的体验优化

@@ -1,7 +1,9 @@
 .DS_Store
-node_modules
+demo
 dev
+node_modules
 src
+test
 
 # Log files
 npm-debug.log*
@@ -12,8 +14,8 @@ yarn-error.log*
 .idea
 .vscode
 .gitignore
+.npmignore
 .npmrc
-test.js
 *.suo
 *.ntvs*
 *.njsproj
@@ -22,4 +24,5 @@ test.js
 yarn.lock
 package-lock.json
 
+build.js
 index.html

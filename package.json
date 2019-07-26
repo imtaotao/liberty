@@ -1,7 +1,7 @@
 {
-  "name": "liberty",
+  "name": "@rustle/liberty",
   "version": "0.0.1",
-  "description": "一个自用的模块加载器",
+  "description": "Module loader running in the browser.",
   "main": "index.js",
   "scripts": {
     "dev": "http-server ./ -o",
@@ -10,8 +10,6 @@
     "test": "karma start test/karma.unit.config.js",
     "test:cover": "karma start test/karma.cover.config.js"
   },
-  "author": "imtaotao",
-  "license": "ISC",
   "devDependencies": {
     "rollup": "^1.13.0",
     "rollup-plugin-cleanup": "^3.1.1",
@@ -26,5 +24,18 @@
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^3.0.5",
     "webpack": "^3.10.0"
-  }
+  },
+  "author": "imtaotao",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/imtaotao/liberty/issues",
+    "email": "dwchentao@163.com"
+  },
+  "keywords": [
+    "wobbly",
+    "animate",
+    "animation"
+  ],
+  "homepage": "https://github.com/imtaotao/liberty",
+  "repository": "git@github.com:imtaotao/liberty.git"
 }
