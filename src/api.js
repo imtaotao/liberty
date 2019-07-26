@@ -134,20 +134,26 @@ export function importModule (path, parentInfo, config, isAsync) {
   }
 
   return isAsync
-    ? getModuleForAsync(pathOpts, config, envPath)
+    ? getModuleForAsync(pathOpts, config, parentInfo)
     : getModuleForSync(pathOpts, config, envPath)
 }
 
-// get Module
-async function getModuleForAsync ({path, exname}, config, envPath) {
+// get module by async
+async function getModuleForAsync ({path, exname}, config, parentInfo) {
   // get static resource
-  const staticFile = resourceCache.has(path)
-    ? resourceCache.get(path)
-    : await asyncRequest(path, envPath)
+  let staticFile = null
+  if (resourceCache.has(path)) {
+    staticFile = resourceCache.get(path)
+  } else {
+    // async module need static optimize
+    await staticOptimize(path, parentInfo, config)
+    staticFile = resourceCache.get(path)
+  }
 
   return genModule(path, exname, config, staticFile)
 }
 
+// get module by sync
 function getModuleForSync ({path, exname}, config, envPath) {
   const staticFile = resourceCache.has(path)
     ? resourceCache.get(path)
@@ -166,7 +172,8 @@ function getModuleResult (Module) {
 function genModule (path, exname, config, staticFile) {
   const Module = processResource(path, exname, config, staticFile)
   // clear static resource file and memory
-  resourceCache.clear(path)
+  // but can't use clear, because this module may be loaded asynchronously
+  resourceCache.cache(path, 1, true)
   return Module
 }
 

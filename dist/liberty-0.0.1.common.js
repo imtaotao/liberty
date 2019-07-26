@@ -345,15 +345,20 @@ function getFilePaths (codeStr, set, processPath) {
 }
 function getFileResult (envPath, paths) {
   return Promise.all(paths.map(async path => {
-    if (resourceCache.has(path)) return
-    const content = await asyncRequest(path, envPath);
-    return { path, content }
+    if (!resourceCache.has(path)){
+      const content = await asyncRequest(path, envPath);
+      if (!content.haveCache) {
+        return { path, content }
+      }
+    }
   }))
 }
 async function deepTraversal (paths, envPath, config, set = new Set()) {
   paths.forEach(v => set.add(v));
   const files = await getFileResult(envPath, paths);
-  const children = files.map(({path, content}) => {
+  const children = files.map((fileInfo) => {
+    if (!fileInfo) return null
+    const { path, content } = fileInfo;
     const parentConfig = getParentConfig(path, content.responseURL);
     resourceCache.cache(path, content);
     const paths = getFilePaths(content.resource, set,
@@ -515,13 +520,17 @@ function importModule (path, parentInfo, config, isAsync) {
       : Promise.resolve(result)
   }
   return isAsync
-    ? getModuleForAsync(pathOpts, config, envPath)
+    ? getModuleForAsync(pathOpts, config, parentInfo)
     : getModuleForSync(pathOpts, config, envPath)
 }
-async function getModuleForAsync ({path, exname}, config, envPath) {
-  const staticFile = resourceCache.has(path)
-    ? resourceCache.get(path)
-    : await asyncRequest(path, envPath);
+async function getModuleForAsync ({path, exname}, config, parentInfo) {
+  let staticFile = null;
+  if (resourceCache.has(path)) {
+    staticFile = resourceCache.get(path);
+  } else {
+    await staticOptimize(path, parentInfo, config);
+    staticFile = resourceCache.get(path);
+  }
   return genModule(path, exname, config, staticFile)
 }
 function getModuleForSync ({path, exname}, config, envPath) {
@@ -537,7 +546,7 @@ function getModuleResult (Module) {
 }
 function genModule (path, exname, config, staticFile) {
   const Module = processResource(path, exname, config, staticFile);
-  resourceCache.clear(path);
+  resourceCache.cache(path, 1, true);
   return Module
 }
 function processResource (path, exname, config, {resource, responseURL}) {
