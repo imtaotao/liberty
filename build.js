@@ -1,5 +1,5 @@
 const rollup = require('rollup')
-// const babel = require('rollup-plugin-babel')
+const babel = require('rollup-plugin-babel')
 const cmd = require('rollup-plugin-commonjs')
 const cleanup = require('rollup-plugin-cleanup')
 const resolve = require('rollup-plugin-node-resolve')
@@ -36,11 +36,10 @@ async function build (cfg) {
     plugins: [
       cleanup(),
       resolve(),
-      // babel({
-      //   exclude: 'node_modules/**',
-      //   presets: ["es2015-rollup"],
-      //   babelrc: false,
-      // }),
+      babel({
+        babelrc: true,
+        exclude: 'node_modules/**',
+      }),
       cmd(),
     ]
   })
