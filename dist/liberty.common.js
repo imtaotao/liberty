@@ -1,98 +1,5 @@
 'use strict';
 
-function genMappings(source) {
-  var lines = source.split('\n');
-
-  var code = function code(l) {
-    return "AA".concat(l, "A");
-  };
-
-  return code('D') + ';' + lines.map(function () {
-    return code('C');
-  }).join(';');
-}
-
-function sourcemap (resource, responseURL) {
-  var content = JSON.stringify({
-    version: 3,
-    sources: [responseURL],
-    mappings: genMappings(resource)
-  });
-  return "//@ sourceMappingURL=data:application/json;base64,".concat(btoa(content));
-}
-
-function _typeof(obj) {
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
-  try {
-    var info = gen[key](arg);
-    var value = info.value;
-  } catch (error) {
-    reject(error);
-    return;
-  }
-
-  if (info.done) {
-    resolve(value);
-  } else {
-    Promise.resolve(value).then(_next, _throw);
-  }
-}
-
-function _asyncToGenerator(fn) {
-  return function () {
-    var self = this,
-        args = arguments;
-    return new Promise(function (resolve, reject) {
-      var gen = fn.apply(self, args);
-
-      function _next(value) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
-      }
-
-      function _throw(err) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
-      }
-
-      _next(undefined);
-    });
-  };
-}
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-function _defineProperties(target, props) {
-  for (var i = 0; i < props.length; i++) {
-    var descriptor = props[i];
-    descriptor.enumerable = descriptor.enumerable || false;
-    descriptor.configurable = true;
-    if ("value" in descriptor) descriptor.writable = true;
-    Object.defineProperty(target, descriptor.key, descriptor);
-  }
-}
-
-function _createClass(Constructor, protoProps, staticProps) {
-  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-  if (staticProps) _defineProperties(Constructor, staticProps);
-  return Constructor;
-}
-
 function assertPath(path) {
   if (typeof path !== 'string') {
     throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
@@ -260,6 +167,99 @@ var posix = {
   win32: null,
   posix: null
 };
+
+function genMappings(source) {
+  var lines = source.split('\n');
+
+  var code = function code(l) {
+    return "AA".concat(l, "A");
+  };
+
+  return code('D') + ';' + lines.map(function () {
+    return code('C');
+  }).join(';');
+}
+
+function sourcemap (resource, responseURL) {
+  var content = JSON.stringify({
+    version: 3,
+    sources: [responseURL],
+    mappings: genMappings(resource)
+  });
+  return "//@ sourceMappingURL=data:application/json;base64,".concat(btoa(content));
+}
+
+function _typeof(obj) {
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
+}
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
+function _asyncToGenerator(fn) {
+  return function () {
+    var self = this,
+        args = arguments;
+    return new Promise(function (resolve, reject) {
+      var gen = fn.apply(self, args);
+
+      function _next(value) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+      }
+
+      function _throw(err) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+
+      _next(undefined);
+    });
+  };
+}
+
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
 
 var config = {
   alias: {},
@@ -515,7 +515,7 @@ function getFileResult(envPath, paths) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              if (resourceCache.has(path)) {
+              if (!(!cacheModule.has(path) && !resourceCache.has(path))) {
                 _context.next = 6;
                 break;
               }
@@ -920,7 +920,7 @@ function getModuleResult(Module) {
 
 function genModule(path, exname, config, staticFile) {
   var Module = processResource(path, exname, config, staticFile);
-  resourceCache.cache(path, 1, true);
+  resourceCache.clear(path);
   return Module;
 }
 
@@ -1037,6 +1037,7 @@ function jsPlugin(_ref) {
 
 var index = {
   init: init,
+  path: posix,
   ready: ready,
   addPlugin: addPlugin,
   plugins: {

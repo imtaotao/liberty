@@ -1,6 +1,6 @@
-import { resourceCache } from './cache'
 import { asyncRequest } from './request'
 import { realPath, getParentConfig } from './utils'
+import cacheModule, { resourceCache } from './cache'
 
 function getFilePaths (codeStr, set, processPath) {
   let res
@@ -44,7 +44,7 @@ function getFilePaths (codeStr, set, processPath) {
 function getFileResult (envPath, paths) {
   return Promise.all(paths.map(async path => {
     // avoid repeat request
-    if (!resourceCache.has(path)){
+    if (!cacheModule.has(path) && !resourceCache.has(path)){
       const content = await asyncRequest(path, envPath)
       if (!content.haveCache) {
         return { path, content }

@@ -172,8 +172,7 @@ function getModuleResult (Module) {
 function genModule (path, exname, config, staticFile) {
   const Module = processResource(path, exname, config, staticFile)
   // clear static resource file and memory
-  // but can't use clear, because this module may be loaded asynchronously
-  resourceCache.cache(path, 1, true)
+  resourceCache.clear(path)
   return Module
 }
 
