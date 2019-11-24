@@ -3,7 +3,7 @@
 
 [npm-image]: https://img.shields.io/npm/v/@rustle/liberty.svg?style=flat-square
 [npm-url]: https://www.npmjs.com/package/@rustle/liberty
-学习和自用。因为是通过 xhr 去加载静态资源，所以必须有个服务器，而且不能跨域
+学习和自用。因为是通过 xhr 去加载静态资源，所以必须有个服务器用来加载静态资源，而且不能跨域
 
 ## CDN
 ```html
@@ -11,6 +11,7 @@
 ```
 
 ## [Demo](./demo)
+这个 [ppt](https://imtaotao.github.io/co-share) 就是使用了 liberty
 ```html
   <script src="https://cdn.jsdelivr.net/gh/imtaotao/liberty/dist/liberty.min.js"></script>
   <script>
@@ -160,7 +161,7 @@ path 模块存放着一些 [nodeJs path](https://nodejs.org/api/path.html) 模�
 
 
 ## Module
-一个模块中有 5 个全局变量可用 `require, module, exports, __filename, __dirname`。所有的模块代码都只会被执行一次。对于循环引用，如果代码没有被执行到，则 require 到的可能为空。处理原则为，能获取到什么就是什么，参考 ejs
+一个模块中有 5 个全局变量可用 `require, module, exports, __filename, __dirname`。所有的模块代码都只会被执行一次。对于循环引用，如果代码没有被执行到，则 require 到的可能为空。处理原则为，能获取到什么就是什么，参考 cjs
 
 - `require` - 用于加载模块，接受一个相对或绝对路径
   + `async` - `require.async` 用于异步加载模块，接受一个相对或绝对路径，返回一个 promise
@@ -199,6 +200,8 @@ path 模块存放着一些 [nodeJs path](https://nodejs.org/api/path.html) 模�
 1. 配合 `liberty.ready` 方法和 `ready hook` 来提前手动异步的加载资源，减少 liberty 静态分析的压力
 
 2. 现阶段的 mvvm 库都会有配套的**异步组件**，使用异步组件可以让首屏渲染时 liberty 静态分析压力减小，加快首屏渲染。这样就可以让静态分析分阶段，随着异步加载而进行。这样能够得到很好的体验优化
+
+3. 代码写的不够优雅，需要重构~
 
 
 <h2>
